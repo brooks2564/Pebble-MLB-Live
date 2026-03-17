@@ -15,8 +15,18 @@
     select{width:100%;padding:12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:16px;outline:none;-webkit-appearance:none;appearance:none}
     .arrow{position:relative}
     .arrow::after{content:"▼";position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#666;pointer-events:none;font-size:12px}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:14px 16px;margin-top:16px}
+    .toggle-label{font-size:15px;color:#f0f0f0}
+    .toggle-sub{font-size:11px;color:#555;margin-top:2px}
+    .switch{position:relative;width:51px;height:31px;flex-shrink:0}
+    .switch input{opacity:0;width:0;height:0}
+    .slider{position:absolute;inset:0;background:#333;border-radius:31px;transition:.3s;cursor:pointer}
+    .slider:before{content:"";position:absolute;width:25px;height:25px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+    input:checked + .slider{background:#e8a000}
+    input:checked + .slider:before{transform:translateX(20px)}
     .btn{display:block;width:100%;margin-top:24px;padding:15px;background:#e8a000;color:#000;font-size:16px;font-weight:800;letter-spacing:1px;text-transform:uppercase;border:none;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent}
     .btn:active{background:#c88800}
+    .divider{height:1px;background:#1e1e1e;margin:24px 0 0}
   </style>
 </head>
 <body>
@@ -25,6 +35,7 @@
     <p>WATCHFACE SETTINGS</p>
   </div>
   <div class="body">
+
     <div class="lbl">Favorite Team</div>
     <div class="arrow">
       <select id="team">
@@ -60,19 +71,40 @@
         <option value="29">WSN - Nationals</option>
       </select>
     </div>
+
+    <div class="divider"></div>
+
+    <div class="lbl" style="margin-top:24px">Notifications</div>
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">Vibrate on Score</div>
+        <div class="toggle-sub">Pulse when your team scores a run</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="vibrate" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
     <button class="btn" id="save">Save &amp; Close</button>
   </div>
+
   <script>
-    // Pre-select saved team from URL hash e.g. #13
-    var hash = parseInt(location.hash.replace("#", ""));
-    var saved = (!isNaN(hash) && hash >= 0 && hash <= 29) ? hash : 13;
-    document.getElementById("team").value = String(saved);
+    // Parse hash: format is #teamIdx|vibrate e.g. #2|1
+    var hash    = location.hash.replace("#", "");
+    var parts   = hash.split("|");
+    var savedIdx = parseInt(parts[0]);
+    var savedVib = parts[1] !== "0";  // default on
+
+    if (!isNaN(savedIdx) && savedIdx >= 0 && savedIdx <= 29) {
+      document.getElementById("team").value = String(savedIdx);
+    }
+    document.getElementById("vibrate").checked = savedVib;
 
     document.getElementById("save").addEventListener("click", function() {
-      var idx = parseInt(document.getElementById("team").value);
-      // Android Pebble app requires the response in the HASH not query string
-      // Format: pebblejs://close#{"teamIdx":2}
-      var payload = JSON.stringify({ teamIdx: idx });
+      var idx     = parseInt(document.getElementById("team").value);
+      var vibrate = document.getElementById("vibrate").checked ? 1 : 0;
+      var payload = JSON.stringify({ teamIdx: idx, vibrate: vibrate });
       window.location.href = "pebblejs://close#" + encodeURIComponent(payload);
     });
   </script>

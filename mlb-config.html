@@ -17,7 +17,6 @@
     .arrow::after{content:"▼";position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#666;pointer-events:none;font-size:12px}
     .btn{display:block;width:100%;margin-top:24px;padding:15px;background:#e8a000;color:#000;font-size:16px;font-weight:800;letter-spacing:1px;text-transform:uppercase;border:none;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent}
     .btn:active{background:#c88800}
-    .status{text-align:center;color:#aaa;font-size:14px;margin-top:20px;display:none}
   </style>
 </head>
 <body>
@@ -62,34 +61,19 @@
       </select>
     </div>
     <button class="btn" id="save">Save &amp; Close</button>
-    <div class="status" id="status">✓ Saved! Press back if the app does not return automatically.</div>
   </div>
   <script>
-    // Pre-select saved team from URL hash e.g. #2 for BAL
+    // Pre-select saved team from URL hash e.g. #13
     var hash = parseInt(location.hash.replace("#", ""));
     var saved = (!isNaN(hash) && hash >= 0 && hash <= 29) ? hash : 13;
     document.getElementById("team").value = String(saved);
 
     document.getElementById("save").addEventListener("click", function() {
       var idx = parseInt(document.getElementById("team").value);
-
-      // Show status message immediately so user knows tap registered
-      document.getElementById("status").style.display = "block";
-      document.getElementById("save").disabled = true;
-
-      // Build the simplest possible close URL
-      // Use a plain query string with just the index number — no JSON encoding
-      // index.js webviewclosed will read e.response and parse it
-      var closeUrl = "pebblejs://close?" + idx;
-
-      // Fire immediately then retry — Android needs the anchor click method
-      var a = document.createElement("a");
-      a.href = closeUrl;
-      document.body.appendChild(a);
-      a.click();
-
-      setTimeout(function() { window.location.href = closeUrl; }, 200);
-      setTimeout(function() { window.location.replace(closeUrl); }, 400);
+      // Android Pebble app requires the response in the HASH not query string
+      // Format: pebblejs://close#{"teamIdx":2}
+      var payload = JSON.stringify({ teamIdx: idx });
+      window.location.href = "pebblejs://close#" + encodeURIComponent(payload);
     });
   </script>
 </body>

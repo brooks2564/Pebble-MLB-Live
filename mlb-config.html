@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>MLB Live Settings</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#0a0a0a;color:#f0f0f0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding-bottom:40px}
+    .hdr{background:#111;border-bottom:1px solid #222;padding:20px;text-align:center;position:sticky;top:0;z-index:10}
+    .hdr h1{font-size:18px;font-weight:700;letter-spacing:3px;color:#fff}
+    .hdr p{font-size:11px;color:#555;letter-spacing:1px;margin-top:4px}
+    .body{padding:24px 20px 0}
+    .lbl{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#555;margin-bottom:8px}
+    select{width:100%;padding:12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:16px;outline:none;-webkit-appearance:none;appearance:none}
+    .arrow{position:relative}
+    .arrow::after{content:"▼";position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#666;pointer-events:none;font-size:12px}
+    .btn{display:block;width:100%;margin-top:24px;padding:15px;background:#e8a000;color:#000;font-size:16px;font-weight:800;letter-spacing:1px;text-transform:uppercase;border:none;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .btn:active{background:#c88800}
+  </style>
+</head>
+<body>
+  <div class="hdr">
+    <h1>⚾ MLB LIVE</h1>
+    <p>WATCHFACE SETTINGS</p>
+  </div>
+  <div class="body">
+    <div class="lbl">Favorite Team</div>
+    <div class="arrow">
+      <select id="team">
+        <option value="0">ARI - D-backs</option>
+        <option value="1">ATL - Braves</option>
+        <option value="2">BAL - Orioles</option>
+        <option value="3">BOS - Red Sox</option>
+        <option value="4">CHC - Cubs</option>
+        <option value="5">CWS - White Sox</option>
+        <option value="6">CIN - Reds</option>
+        <option value="7">CLE - Guardians</option>
+        <option value="8">COL - Rockies</option>
+        <option value="9">DET - Tigers</option>
+        <option value="10">HOU - Astros</option>
+        <option value="11">KCR - Royals</option>
+        <option value="12">LAA - Angels</option>
+        <option value="13">LAD - Dodgers</option>
+        <option value="14">MIA - Marlins</option>
+        <option value="15">MIL - Brewers</option>
+        <option value="16">MIN - Twins</option>
+        <option value="17">NYM - Mets</option>
+        <option value="18">NYY - Yankees</option>
+        <option value="19">OAK - Athletics</option>
+        <option value="20">PHI - Phillies</option>
+        <option value="21">PIT - Pirates</option>
+        <option value="22">SDP - Padres</option>
+        <option value="23">SEA - Mariners</option>
+        <option value="24">SFG - Giants</option>
+        <option value="25">STL - Cardinals</option>
+        <option value="26">TBR - Rays</option>
+        <option value="27">TEX - Rangers</option>
+        <option value="28">TOR - Blue Jays</option>
+        <option value="29">WSN - Nationals</option>
+      </select>
+    </div>
+    <button class="btn" id="save">Save &amp; Close</button>
+  </div>
+  <script>
+    // Read saved team from URL hash e.g. #13
+    var hash = parseInt(location.hash.replace("#",""));
+    var saved = (!isNaN(hash) && hash >= 0 && hash <= 29) ? hash : 13;
+    document.getElementById("team").value = String(saved);
+
+    document.getElementById("save").addEventListener("click", function() {
+      var idx = parseInt(document.getElementById("team").value);
+      location.href = "pebblejs://close?" + encodeURIComponent(JSON.stringify({teamIdx: idx}));
+    });
+  </script>
+</body>
+</html>

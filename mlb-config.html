@@ -17,6 +17,8 @@
     .arrow::after{content:"▼";position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#666;pointer-events:none;font-size:12px}
     .btn{display:block;width:100%;margin-top:24px;padding:15px;background:#e8a000;color:#000;font-size:16px;font-weight:800;letter-spacing:1px;text-transform:uppercase;border:none;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent}
     .btn:active{background:#c88800}
+    .btn:disabled{background:#555;color:#888}
+    .saving{text-align:center;color:#888;font-size:13px;margin-top:12px;display:none}
   </style>
 </head>
 <body>
@@ -61,16 +63,36 @@
       </select>
     </div>
     <button class="btn" id="save">Save &amp; Close</button>
+    <div class="saving" id="saving">Saving… returning to watch</div>
   </div>
   <script>
-    // Read saved team from URL hash e.g. #13
-    var hash = parseInt(location.hash.replace("#",""));
+    // Pre-select saved team from URL hash e.g. #2 for BAL
+    var hash = parseInt(location.hash.replace("#", ""));
     var saved = (!isNaN(hash) && hash >= 0 && hash <= 29) ? hash : 13;
     document.getElementById("team").value = String(saved);
 
     document.getElementById("save").addEventListener("click", function() {
+      var btn = document.getElementById("save");
+      var saving = document.getElementById("saving");
+
+      // Disable button and show feedback so user knows it worked
+      btn.disabled = true;
+      btn.textContent = "Saved!";
+      saving.style.display = "block";
+
       var idx = parseInt(document.getElementById("team").value);
-      location.href = "pebblejs://close?" + encodeURIComponent(JSON.stringify({teamIdx: idx}));
+      var result = encodeURIComponent(JSON.stringify({ teamIdx: idx }));
+      var closeUrl = "pebblejs://close?" + result;
+
+      // Try all three methods — one of them will work depending on
+      // Pebble app version and platform
+      try { window.location.assign(closeUrl); } catch(e) {}
+      setTimeout(function() {
+        try { window.location.href = closeUrl; } catch(e) {}
+      }, 100);
+      setTimeout(function() {
+        try { document.location = closeUrl; } catch(e) {}
+      }, 300);
     });
   </script>
 </body>

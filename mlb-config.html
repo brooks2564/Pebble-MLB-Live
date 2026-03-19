@@ -110,16 +110,6 @@
       </select>
     </div>
 
-    <div class="toggle-row" style="margin-top:14px">
-      <div>
-        <div class="toggle-label">24-Hour Time</div>
-        <div class="toggle-sub">Show times in 24h format</div>
-      </div>
-      <label class="switch">
-        <input type="checkbox" id="hour24">
-        <span class="slider"></span>
-      </label>
-    </div>
 
     <div style="text-align:center;margin-top:20px">
       <a href="https://venmo.com/YOUR-VENMO-USERNAME" target="_blank" 
@@ -139,14 +129,12 @@
     var savedVib   = parts[1] !== "0";
     var savedBat   = parts[2] !== "0";
     var savedTz    = parts[3] !== undefined ? parseInt(parts[3]) : -5;
-    var savedH24   = parts[4] === "1";
 
     if (!isNaN(savedIdx) && savedIdx >= 0 && savedIdx <= 29) {
       document.getElementById("team").value = String(savedIdx);
     }
     document.getElementById("vibrate").checked    = savedVib;
     document.getElementById("batteryBar").checked = savedBat;
-    document.getElementById("hour24").checked     = savedH24;
     // Set timezone dropdown
     var tzSel = document.getElementById("tzOffset");
     for (var i=0; i<tzSel.options.length; i++) {
@@ -158,8 +146,7 @@
       var vibrate    = document.getElementById("vibrate").checked    ? 1 : 0;
       var batteryBar = document.getElementById("batteryBar").checked ? 1 : 0;
       var tzOffset   = parseInt(document.getElementById("tzOffset").value);
-      var hour24     = document.getElementById("hour24").checked     ? 1 : 0;
-      var payload = JSON.stringify({ teamIdx: idx, vibrate: vibrate, batteryBar: batteryBar, tzOffset: tzOffset, hour24: hour24 });
+      var payload = JSON.stringify({ teamIdx: idx, vibrate: vibrate, batteryBar: batteryBar, tzOffset: tzOffset });
       window.location.href = "pebblejs://close#" + encodeURIComponent(payload);
     });
   </script>

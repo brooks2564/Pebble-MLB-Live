@@ -85,26 +85,39 @@
         <span class="slider"></span>
       </label>
     </div>
+    <div class="toggle-row" style="margin-top:10px">
+      <div>
+        <div class="toggle-label">Battery Bar</div>
+        <div class="toggle-sub">Show battery level at bottom of screen</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="batteryBar" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
 
     <button class="btn" id="save">Save &amp; Close</button>
   </div>
 
   <script>
     // Parse hash: format is #teamIdx|vibrate e.g. #2|1
-    var hash    = location.hash.replace("#", "");
-    var parts   = hash.split("|");
-    var savedIdx = parseInt(parts[0]);
-    var savedVib = parts[1] !== "0";  // default on
+    var hash       = location.hash.replace("#", "");
+    var parts      = hash.split("|");
+    var savedIdx   = parseInt(parts[0]);
+    var savedVib   = parts[1] !== "0";
+    var savedBat   = parts[2] !== "0";  // default on
 
     if (!isNaN(savedIdx) && savedIdx >= 0 && savedIdx <= 29) {
       document.getElementById("team").value = String(savedIdx);
     }
-    document.getElementById("vibrate").checked = savedVib;
+    document.getElementById("vibrate").checked    = savedVib;
+    document.getElementById("batteryBar").checked = savedBat;
 
     document.getElementById("save").addEventListener("click", function() {
-      var idx     = parseInt(document.getElementById("team").value);
-      var vibrate = document.getElementById("vibrate").checked ? 1 : 0;
-      var payload = JSON.stringify({ teamIdx: idx, vibrate: vibrate });
+      var idx        = parseInt(document.getElementById("team").value);
+      var vibrate    = document.getElementById("vibrate").checked    ? 1 : 0;
+      var batteryBar = document.getElementById("batteryBar").checked ? 1 : 0;
+      var payload = JSON.stringify({ teamIdx: idx, vibrate: vibrate, batteryBar: batteryBar });
       window.location.href = "pebblejs://close#" + encodeURIComponent(payload);
     });
   </script>

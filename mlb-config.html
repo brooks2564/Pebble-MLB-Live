@@ -29,6 +29,9 @@
     .coffee{display:block;text-align:center;margin-top:20px;color:#555;font-size:12px;text-decoration:none;letter-spacing:1px;}
     .coffee span{color:#e8a000;}
     .divider{height:1px;background:#1e1e1e;margin:24px 0 0}
+    .setting-row{margin-top:14px}
+    .setting-label{font-size:15px;color:#f0f0f0;margin-bottom:6px}
+    .setting-sub{font-size:11px;color:#555;margin-bottom:8px}
   </style>
 </head>
 <body>
@@ -98,21 +101,40 @@
       </label>
     </div>
 
-    <div style="margin-top:14px">
-      <div class="toggle-label" style="margin-bottom:6px">Timezone</div>
-      <select id="tzOffset" style="width:100%;padding:8px;border-radius:8px;background:#1e1e2e;color:#fff;border:1px solid #444;font-size:14px">
-        <option value="-5">ET — Eastern (UTC-5)</option>
-        <option value="-6">CT — Central (UTC-6)</option>
-        <option value="-7">MT — Mountain (UTC-7)</option>
-        <option value="-8">PT — Pacific (UTC-8)</option>
-        <option value="0">UK — GMT/BST (UTC+0)</option>
-        <option value="1">CET — Central Europe (UTC+1)</option>
-      </select>
+    <div class="divider"></div>
+
+    <div class="lbl" style="margin-top:24px">Display</div>
+
+    <div class="setting-row">
+      <div class="setting-label">Timezone</div>
+      <div class="setting-sub">Used to display correct game times</div>
+      <div class="arrow">
+        <select id="tzOffset">
+          <option value="-5">ET — Eastern (UTC-5)</option>
+          <option value="-6">CT — Central (UTC-6)</option>
+          <option value="-7">MT — Mountain (UTC-7)</option>
+          <option value="-8">PT — Pacific (UTC-8)</option>
+          <option value="0">UK — GMT/BST (UTC+0)</option>
+          <option value="1">CET — Central Europe (UTC+1)</option>
+        </select>
+      </div>
     </div>
 
+    <div class="setting-row" style="margin-top:16px">
+      <div class="setting-label">Ticker Speed</div>
+      <div class="setting-sub">How long each score is shown before cycling to the next</div>
+      <div class="arrow">
+        <select id="tickerSpeed">
+          <option value="5000">5 seconds (default)</option>
+          <option value="10000">10 seconds</option>
+          <option value="30000">30 seconds</option>
+          <option value="60000">60 seconds</option>
+        </select>
+      </div>
+    </div>
 
-    <div style="text-align:center;margin-top:20px">
-      <a href="https://venmo.com/brooman-inks" target="_blank" 
+    <div style="text-align:center;margin-top:24px">
+      <a href="https://venmo.com/brooman-inks" target="_blank"
          style="color:#e8a000;font-size:15px;text-decoration:none;font-weight:600;letter-spacing:1px">
         Buy me a coffee &#9749;
       </a>
@@ -122,23 +144,29 @@
   </div>
 
   <script>
-    // Parse hash: format is #teamIdx|vibrate e.g. #2|1
-    var hash       = location.hash.replace("#", "");
-    var parts      = hash.split("|");
-    var savedIdx   = parseInt(parts[0]);
-    var savedVib   = parts[1] !== "0";
-    var savedBat   = parts[2] !== "0";
-    var savedTz    = parts[3] !== undefined ? parseInt(parts[3]) : -5;
+    // Hash format: #teamIdx|vibrate|batteryBar|tzOffset|tickerSpeed
+    var hash   = location.hash.replace("#", "");
+    var parts  = hash.split("|");
+    var savedIdx        = parseInt(parts[0]);
+    var savedVib        = parts[1] !== "0";
+    var savedBat        = parts[2] !== "0";
+    var savedTz         = parts[3] !== undefined ? parseInt(parts[3]) : -5;
+    var savedTickerSpd  = parts[4] !== undefined ? parseInt(parts[4]) : 5000;
 
     if (!isNaN(savedIdx) && savedIdx >= 0 && savedIdx <= 29) {
       document.getElementById("team").value = String(savedIdx);
     }
     document.getElementById("vibrate").checked    = savedVib;
     document.getElementById("batteryBar").checked = savedBat;
-    // Set timezone dropdown
+
     var tzSel = document.getElementById("tzOffset");
-    for (var i=0; i<tzSel.options.length; i++) {
+    for (var i = 0; i < tzSel.options.length; i++) {
       if (parseInt(tzSel.options[i].value) === savedTz) { tzSel.selectedIndex = i; break; }
+    }
+
+    var spdSel = document.getElementById("tickerSpeed");
+    for (var i = 0; i < spdSel.options.length; i++) {
+      if (parseInt(spdSel.options[i].value) === savedTickerSpd) { spdSel.selectedIndex = i; break; }
     }
 
     document.getElementById("save").addEventListener("click", function() {
@@ -146,7 +174,14 @@
       var vibrate    = document.getElementById("vibrate").checked    ? 1 : 0;
       var batteryBar = document.getElementById("batteryBar").checked ? 1 : 0;
       var tzOffset   = parseInt(document.getElementById("tzOffset").value);
-      var payload = JSON.stringify({ teamIdx: idx, vibrate: vibrate, batteryBar: batteryBar, tzOffset: tzOffset });
+      var tickerSpeed= parseInt(document.getElementById("tickerSpeed").value);
+      var payload = JSON.stringify({
+        teamIdx: idx,
+        vibrate: vibrate,
+        batteryBar: batteryBar,
+        tzOffset: tzOffset,
+        tickerSpeed: tickerSpeed
+      });
       window.location.href = "pebblejs://close#" + encodeURIComponent(payload);
     });
   </script>

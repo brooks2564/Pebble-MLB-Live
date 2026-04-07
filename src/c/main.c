@@ -231,6 +231,11 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   int h    = b.size.h;
   int split= h * 3 / 10;
   int by   = split + 2;
+#ifdef PBL_ROUND
+  int hpad = 18;
+#else
+  int hpad = 2;
+#endif
 
   // Background
   graphics_context_set_fill_color(ctx, GColorBlack);
@@ -259,10 +264,10 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   // Time + date
   graphics_context_set_text_color(ctx, GColorWhite);
   graphics_draw_text(ctx, s_time_buf, f24,
-    GRect(2, 2, 72, 26), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+    GRect(hpad, 2, 72, 26), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
   graphics_context_set_text_color(ctx, GColorLightGray);
   graphics_draw_text(ctx, s_date_buf, f14,
-    GRect(74, 6, w-76, 16), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
+    GRect(74, 6, w - 74 - hpad, 16), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
 
   // No game
   if (strcmp(s_status, "off") == 0) {
@@ -277,9 +282,9 @@ static void canvas_update(Layer *layer, GContext *ctx) {
     if (s_next_game[0]) {
       graphics_context_set_text_color(ctx, GColorLightGray);
       graphics_draw_text(ctx, "Next:", f14,
-        GRect(2, by+48, 30, 14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+        GRect(hpad, by+48, 30, 14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
       graphics_draw_text(ctx, s_next_game, f14,
-        GRect(34, by+48, w-36, 14), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+        GRect(hpad+32, by+48, w-hpad-34, 14), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
     }
     return;
   }
@@ -287,17 +292,17 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   // Score — G1 label if doubleheader
   graphics_context_set_text_color(ctx, GColorWhite);
   graphics_draw_text(ctx, s_away_abbr, f24,
-    GRect(2, by-8, 44, 22), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+    GRect(hpad, by-8, 44, 22), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
   char sc[16];
   snprintf(sc, sizeof(sc), "%d - %d", s_away_score, s_home_score);
   graphics_draw_text(ctx, sc, f28,
-    GRect(44, by-8, 56, 28), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+    GRect(w/2 - 28, by-8, 56, 28), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
   graphics_draw_text(ctx, s_home_abbr, f24,
-    GRect(98, by-8, 44, 22), GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
+    GRect(w - 44 - hpad, by-8, 44, 22), GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
   if (s_game2_status[0] && strcmp(s_game2_status,"off")!=0) {
     graphics_context_set_text_color(ctx, GColorYellow);
     graphics_draw_text(ctx, "G1", f14,
-      GRect(2, by+14, 20, 14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+      GRect(hpad, by+14, 20, 14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
   }
 
   // Records
@@ -305,10 +310,10 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   char rec[10];
   snprintf(rec, sizeof(rec), "%d-%d", s_away_wins, s_away_losses);
   graphics_draw_text(ctx, rec, f14,
-    GRect(2, by+14, 44, 14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+    GRect(hpad, by+14, 44, 14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
   snprintf(rec, sizeof(rec), "%d-%d", s_home_wins, s_home_losses);
   graphics_draw_text(ctx, rec, f14,
-    GRect(98, by+14, 44, 14), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
+    GRect(w - 46 - hpad, by+14, 46, 14), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
 
   // Inning
   char inn[32];
@@ -334,15 +339,15 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   if (s_game2_status[0] && strcmp(s_game2_status,"off")!=0 && s_game2_score[0]) {
     graphics_context_set_text_color(ctx, GColorLightGray);
     graphics_draw_text(ctx, "G2:", f14,
-      GRect(2, by+46, 24, 14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+      GRect(hpad, by+46, 24, 14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
     graphics_draw_text(ctx, s_game2_score, f14,
-      GRect(28, by+46, w-30, 14), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+      GRect(hpad+26, by+46, w-hpad-28, 14), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
   } else if (strcmp(s_status,"final")==0 && s_next_game[0]) {
     graphics_context_set_text_color(ctx, GColorLightGray);
     graphics_draw_text(ctx, "Next:", f14,
-      GRect(2, by+46, 30, 14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+      GRect(hpad, by+46, 30, 14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
     graphics_draw_text(ctx, s_next_game, f14,
-      GRect(34, by+46, w-36, 14), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+      GRect(hpad+32, by+46, w-hpad-34, 14), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
   }
 
   if (strcmp(s_status,"live")!=0) return;
@@ -351,7 +356,7 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   if (s_batter[0]) {
     graphics_context_set_text_color(ctx, GColorWhite);
     graphics_draw_text(ctx, s_batter, f14,
-      GRect(2, by+44, w-44, 14), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+      GRect(hpad, by+44, w-44-hpad, 14), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
   }
   if (s_pitch_speed > 0 || s_pitch_type[0]) {
     char spd[24] = "";
@@ -370,7 +375,7 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   if (s_last_play[0]) {
     graphics_context_set_text_color(ctx, GColorLightGray);
     graphics_draw_text(ctx, s_last_play, f14,
-      GRect(2, by+58, w-28, 14), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+      GRect(hpad, by+58, w-28-hpad, 14), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
   }
 
   // Diamond
@@ -393,14 +398,14 @@ static void canvas_update(Layer *layer, GContext *ctx) {
 
   // BSO
   graphics_context_set_text_color(ctx, GColorMediumAquamarine);
-  graphics_draw_text(ctx, "B", f14, GRect(2,by+72,14,14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-  draw_dots(ctx, 18, by+80, 4, s_balls);
+  graphics_draw_text(ctx, "B", f14, GRect(hpad,by+72,14,14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+  draw_dots(ctx, hpad+16, by+80, 4, s_balls);
   graphics_context_set_text_color(ctx, GColorMediumAquamarine);
-  graphics_draw_text(ctx, "S", f14, GRect(2,by+85,14,14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-  draw_dots(ctx, 18, by+93, 3, s_strikes);
+  graphics_draw_text(ctx, "S", f14, GRect(hpad,by+85,14,14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+  draw_dots(ctx, hpad+16, by+93, 3, s_strikes);
   graphics_context_set_text_color(ctx, GColorWhite);
-  graphics_draw_text(ctx, "O", f14, GRect(2,by+98,14,14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-  draw_dots(ctx, 18, by+106, 3, s_outs);
+  graphics_draw_text(ctx, "O", f14, GRect(hpad,by+98,14,14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+  draw_dots(ctx, hpad+16, by+106, 3, s_outs);
 }
 
 // ── Clock ──────────────────────────────────────────────────────────────────

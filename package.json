@@ -7,6 +7,8 @@
   "dependencies": {},
   "pebble": {
     "displayName": "MLB Live",
+    "shortName": "MLB Live",
+    "longName": "MLB Live Scores",
     "uuid": "2ef10c51-88ea-4939-8e5b-76a139743d33",
     "sdkVersion": "3",
     "enableMultiJS": true,
@@ -58,7 +60,14 @@
       "TICKER_SPEED": 32
     },
     "resources": {
-      "media": []
+      "media": [
+        {
+          "type": "bitmap",
+          "name": "IMAGE_MENU_ICON",
+          "file": "images/menu_icon.png",
+          "menuIcon": true
+        }
+      ]
     }
   }
 }

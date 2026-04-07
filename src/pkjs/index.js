@@ -470,7 +470,7 @@ Pebble.addEventListener("appmessage", function(e) {
 
 // ── Settings ───────────────────────────────────────────────────────────────
 Pebble.addEventListener("showConfiguration", function() {
-  var url = CONFIG_URL + "#" + gTeamIdx +
+  var url = CONFIG_URL + "?v=2" + "#" + gTeamIdx +
     "|" + (gVibrate    ? "1" : "0") +
     "|" + (gBatteryBar ? "1" : "0") +
     "|" + gTzOffset +

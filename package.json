@@ -7,7 +7,7 @@
   "dependencies": {},
   "pebble": {
     "displayName": "MLB Live",
-    "uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567891",
+    "uuid": "2ef10c51-88ea-4939-8e5b-76a139743d33",
     "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": [

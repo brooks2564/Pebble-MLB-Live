@@ -9,7 +9,7 @@ Data: SportsData.io API (key in `src/pkjs/index.js`)
 ## Build & Install
 ```bash
 pebble build
-pebble install --phone 192.168.0.182
+pebble install --phone 192.168.0.238
 ```
 
 ## Project Structure

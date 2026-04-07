@@ -7,9 +7,14 @@ GitHub: `brooks2564/Pebble-MLB-Live`
 Data: Official MLB Stats API (free, no key — statsapi.mlb.com)
 
 ## Build & Install
+Always rebuild, update the committed PBW, and push together:
 ```bash
 pebble build
+cp build/Pebble-MLB-Live.pbw Pebble-MLB-Live.pbw
 pebble install --phone 192.168.0.238
+git add Pebble-MLB-Live.pbw
+git commit -m "Update PBW"
+git push
 ```
 
 ## Project Structure

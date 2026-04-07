@@ -410,6 +410,7 @@ function processGames(games, abbr) {
   msg[KEY_NEXT_GAME]    = "";
   msg[KEY_BATTERY_BAR]  = gBatteryBar ? 1 : 0;
   msg[KEY_TICKER]       = ticker;
+  msg[KEY_TICKER_SPEED] = gTickerSpeed;
   msg[KEY_WEATHER]      = weather;
   msg[KEY_PITCH_TYPE]   = "";
   msg[KEY_GAME2_STATUS] = g2status;

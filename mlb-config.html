@@ -145,7 +145,7 @@
 
   <script>
     // Hash format: #teamIdx|vibrate|batteryBar|tzOffset|tickerSpeed
-    var hash   = location.hash.replace("#", "");
+    var hash   = location.hash.replace("#", "").replace(/%7C/gi, "|");
     var parts  = hash.split("|");
     var savedIdx        = parseInt(parts[0]);
     var savedVib        = parts[1] !== "0";

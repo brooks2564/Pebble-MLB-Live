@@ -4,7 +4,7 @@
 **MLB Live Scores** is a Pebble smartwatch **watchface** that displays live MLB scores, inning data, pitch info, base runners, BSO counts, and a scrolling ticker of all today's games.
 UUID: `2ef10c51-88ea-4939-8e5b-76a139743d33`
 GitHub: `brooks2564/Pebble-MLB-Live`
-Data: SportsData.io API (key in `src/pkjs/index.js`)
+Data: Official MLB Stats API (free, no key — statsapi.mlb.com)
 
 ## Build & Install
 ```bash
@@ -89,6 +89,13 @@ Pebble-MLB-Live/
 Hosted at `https://brooks2564.github.io/Pebble-MLB-Live/mlb-config.html`
 Hash format passed in: `#teamIdx|vibrate|batteryBar|tzOffset|tickerSpeed`
 Returns JSON via `pebblejs://close#encodeURIComponent({...})`
+
+## CloudPebble (repebble)
+Import this repo directly into CloudPebble:
+```
+https://cloudpebble.repebble.com/ide/import/github/brooks2564/Pebble-MLB-Live
+```
+cloudpebble.net is dead (redirects to Fitbit). Use cloudpebble.repebble.com instead.
 
 ## Git
 ```bash

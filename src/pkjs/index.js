@@ -33,11 +33,14 @@ var KEY_GAME2_SCORE  = 30;
 var KEY_TZ_OFFSET    = 31;
 var KEY_TICKER_SPEED = 32;
 
-var API_KEY      = "c342abf737624462ab9d6c660d30a9b2";
-var BASE_URL     = "https://api.sportsdata.io/v3/mlb/scores/json/GamesByDate";
-var PBP_URL      = "https://api.sportsdata.io/v3/mlb/stats/json/PlayByPlay";
-var STANDING_URL = "https://api.sportsdata.io/v3/mlb/scores/json/Standings";
+// Official MLB Stats API — free, no key required
+var SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule";
+var LIVE_URL     = "https://statsapi.mlb.com/api/v1.1/game";
 var CONFIG_URL   = "https://brooks2564.github.io/Pebble-MLB-Live/mlb-config.html";
+
+// MLB Stats API uses shorter abbreviations for 5 teams — map to our internal 3-letter abbrs
+var MLB_TO_INTERNAL = { "KC":"KCR", "SD":"SDP", "SF":"SFG", "TB":"TBR", "WSH":"WSN" };
+function toInternal(abbr) { return MLB_TO_INTERNAL[abbr] || abbr; }
 
 var TEAMS = [
   { abbr: "ARI", name: "D-backs"   },
@@ -73,13 +76,20 @@ var TEAMS = [
 ];
 
 // ── Saved state ────────────────────────────────────────────────────────────
-var gTeamIdx     = parseInt(localStorage.getItem("teamIdx")     || "13");
-var gVibrate     = localStorage.getItem("vibrate")    !== "0";
-var gBatteryBar  = localStorage.getItem("batteryBar") !== "0";
-var gTzOffset    = parseInt(localStorage.getItem("tzOffset")    || "-5");
-var gTickerSpeed = parseInt(localStorage.getItem("tickerSpeed") || "5000");
-var gStandings   = {};
-var gAllGames    = [];  // today's full game list for ticker
+var gTeamIdx    = parseInt(localStorage.getItem("teamIdx")  || "13");
+var gVibrate    = localStorage.getItem("vibrate")    !== "0";
+var gBatteryBar = localStorage.getItem("batteryBar") !== "0";
+var gTzOffset   = parseInt(localStorage.getItem("tzOffset") || "-5");
+// Ticker speed stored/used as a STRING to avoid Pebble JS number truncation bugs.
+// Pebble's + operator and parseInt truncate multi-digit numbers to 3 chars.
+// JSON.stringify is the only safe number→string conversion.
+function validSpeedStr(s) {
+  return s === "5000" || s === "10000" || s === "30000" || s === "60000";
+}
+var SPEED_NUM = {"5000":5000, "10000":10000, "30000":30000, "60000":60000};
+var _rawSpd    = localStorage.getItem("tickerSpeed");
+var gTickerSpeed = validSpeedStr(_rawSpd) ? _rawSpd : "5000"; // STRING, e.g. "10000"
+var gAllGames   = [];
 
 // ── Utility ───────────────────────────────────────────────────────────────
 function todayDateStr() {
@@ -91,21 +101,20 @@ function todayDateStr() {
     (dd < 10 ? "0" + dd : dd);
 }
 
+// MLB Stats API returns game times in UTC — convert to phone's local timezone
 function formatStartTime(isoStr) {
   if (!isoStr) return "";
   try {
-    var parts = isoStr.split("T");
-    if (parts.length < 2) return "";
-    var tp = parts[1].split(":");
-    var h  = parseInt(tp[0]);
-    var m  = tp[1];
+    var d = new Date(isoStr);
+    if (isNaN(d.getTime())) return "";
+    var h = d.getHours(), m = d.getMinutes();
     var ampm = h >= 12 ? "PM" : "AM";
     h = h % 12; if (h === 0) h = 12;
-    return h + ":" + m + " " + ampm;
+    return h + ":" + (m < 10 ? "0" + m : m) + " " + ampm;
   } catch(e) { return ""; }
 }
 
-// Map SportsData.io play description to short readable result (max ~12 chars)
+// Map play description to short readable result (max ~12 chars)
 function describePlay(desc) {
   if (!desc) return "";
   var d = desc.toLowerCase();
@@ -134,167 +143,102 @@ function describePlay(desc) {
   return desc.substring(0, 12);
 }
 
-// Extract pitch type abbreviation from description
-function extractPitchType(desc) {
-  if (!desc) return "";
-  var d = desc.toLowerCase();
-  if (d.indexOf("four-seam") !== -1 || d.indexOf("fastball") !== -1) return "FB";
-  if (d.indexOf("two-seam")  !== -1 || d.indexOf("sinker")   !== -1) return "SIN";
-  if (d.indexOf("curveball") !== -1 || d.indexOf("curve")    !== -1) return "CRV";
-  if (d.indexOf("slider")    !== -1) return "SL";
-  if (d.indexOf("changeup")  !== -1 || d.indexOf("change-up") !== -1) return "CH";
-  if (d.indexOf("cutter")    !== -1) return "CUT";
-  if (d.indexOf("sweeper")   !== -1) return "SWP";
-  if (d.indexOf("splitter")  !== -1) return "SPL";
-  if (d.indexOf("knuckle")   !== -1) return "KN";
-  return "";
-}
+// Map MLB Stats API pitch type codes to short display strings
+var PITCH_CODE_MAP = {
+  "FF":"FB", "FA":"FB", "SI":"SIN", "FT":"SIN",
+  "CU":"CRV", "KC":"CRV", "SL":"SL", "ST":"SWP",
+  "CH":"CH", "FS":"SPL", "FC":"CUT", "KN":"KN"
+};
+function pitchCodeToAbbr(code) { return PITCH_CODE_MAP[code] || ""; }
 
 // ── Ticker builder ─────────────────────────────────────────────────────────
-// Builds a pipe-delimited string of today's game scores for the ticker strip.
-// Format per game: "ARI 3 - LAD 5 F" or "NYY vs BOS 7:05 PM" or "NYY 2 - BOS 4 T5"
 function buildTicker(games, myAbbr) {
   var parts = [];
   for (var i = 0; i < games.length; i++) {
     var g    = games[i];
-    var away = (g.AwayTeam || "").toUpperCase();
-    var home = (g.HomeTeam || "").toUpperCase();
-    if (away === myAbbr || home === myAbbr) continue; // skip my team's game
-    var raw    = (g.Status || "").toLowerCase();
-    var status = raw === "inprogress" ? "live"
-               : raw === "final"     ? "final"
-               : raw === "scheduled" ? "pre" : null;
+    var away = toInternal((g.teams.away.team.abbreviation || "").toUpperCase());
+    var home = toInternal((g.teams.home.team.abbreviation || "").toUpperCase());
+    if (away === myAbbr || home === myAbbr) continue;
+
+    var state  = (g.status && g.status.abstractGameState) || "";
+    var status = state === "Live"    ? "live"
+               : state === "Final"   ? "final"
+               : state === "Preview" ? "pre" : null;
     if (!status) continue;
 
     var entry = "";
     if (status === "pre") {
-      var t = formatStartTime(g.DateTime || g.Day || "");
+      var t = formatStartTime(g.gameDate || "");
       entry = away + " vs " + home + (t ? " " + t : "");
     } else if (status === "final") {
-      entry = away + " " + (g.AwayTeamRuns || 0) + " - " +
-              home + " " + (g.HomeTeamRuns || 0) + " F";
+      entry = away + " " + (g.teams.away.score || 0) + " - " +
+              home + " " + (g.teams.home.score || 0) + " F";
     } else {
-      // live
-      var half = g.InningHalf === "B" ? "B" : "T";
-      entry = away + " " + (g.AwayTeamRuns || 0) + " - " +
-              home + " " + (g.HomeTeamRuns || 0) +
-              " " + half + (g.Inning || "");
+      var ls   = g.linescore || {};
+      var half = ls.isTopInning ? "T" : "B";
+      entry = away + " " + (g.teams.away.score || 0) + " - " +
+              home + " " + (g.teams.home.score || 0) +
+              " " + half + (ls.currentInning || "");
     }
-    // Trim to 21 chars (GAME_LEN-1)
     if (entry.length > 21) entry = entry.substring(0, 21);
     parts.push(entry);
   }
   return parts.join("|");
 }
 
-// Find next scheduled game for the team (from another date's schedule)
-// For now returns empty — future enhancement
-function findNextGame() { return ""; }
-
-// ── Standings fetch ────────────────────────────────────────────────────────
-function fetchStandings(callback) {
-  var year = new Date().getFullYear();
-  var url  = STANDING_URL + "/" + year + "?key=" + API_KEY;
-  var xhr  = new XMLHttpRequest();
-  xhr.open("GET", url, true);
-  xhr.setRequestHeader("Accept", "application/json");
-  xhr.onload = function() {
-    if (xhr.status !== 200) { callback({}); return; }
-    try {
-      var data      = JSON.parse(xhr.responseText);
-      var standings = {};
-      var divisions = {};
-      for (var i = 0; i < data.length; i++) {
-        var s   = data[i];
-        var div = s.Division || "?";
-        if (!divisions[div]) divisions[div] = [];
-        divisions[div].push(s);
-      }
-      for (var div in divisions) {
-        var teams = divisions[div];
-        teams.sort(function(a, b) { return (b.Wins || 0) - (a.Wins || 0); });
-        for (var r = 0; r < teams.length; r++) {
-          var abbr = (teams[r].Key || "").toUpperCase();
-          standings[abbr] = {
-            wins: teams[r].Wins || 0,
-            losses: teams[r].Losses || 0
-          };
-        }
-      }
-      gStandings = standings;
-      callback(standings);
-    } catch(e) { callback({}); }
-  };
-  xhr.onerror = function() { callback({}); };
-  xhr.send();
-}
-
-// ── Play-by-play fetch ─────────────────────────────────────────────────────
-function fetchPlayByPlay(gameId, callback) {
-  var url = PBP_URL + "/" + gameId + "?key=" + API_KEY;
-  console.log("[MLB] Fetching PBP: " + url);
+// ── Live game fetch ────────────────────────────────────────────────────────
+function fetchLiveGame(gamePk, callback) {
+  var url = LIVE_URL + "/" + gamePk + "/feed/live";
+  console.log("[MLB] Fetching live: " + gamePk);
   var xhr = new XMLHttpRequest();
   xhr.open("GET", url, true);
   xhr.setRequestHeader("Accept", "application/json");
   xhr.onload = function() {
     if (xhr.status !== 200) { callback(null); return; }
     try { callback(JSON.parse(xhr.responseText)); }
-    catch(e) { console.log("[MLB] PBP parse error: " + e); callback(null); }
+    catch(e) { console.log("[MLB] Live parse error: " + e); callback(null); }
   };
   xhr.onerror = function() { callback(null); };
   xhr.send();
 }
 
-// Extract useful fields from play-by-play data
-function extractPBP(pbpData) {
-  var result = {
-    batter:     "",
-    pitchSpeed: 0,
-    pitchType:  "",
-    lastPlay:   "",
-    onFirst:    0,
-    onSecond:   0,
-    onThird:    0
-  };
-  if (!pbpData) return result;
+function extractLivePBP(liveData) {
+  var result = { batter:"", pitchSpeed:0, pitchType:"", lastPlay:"", onFirst:0, onSecond:0, onThird:0 };
+  if (!liveData) return result;
 
-  var innings = pbpData.Innings || [];
-  if (!innings.length) return result;
+  var ld        = liveData.liveData || {};
+  var linescore = ld.linescore || {};
+  var offense   = linescore.offense || {};
 
-  // Walk backwards to find the most recent at-bat with plays
-  var lastAtBat = null;
-  for (var i = innings.length - 1; i >= 0; i--) {
-    var inn   = innings[i];
-    var atBats = (inn.TopHalfAtBats || []).concat(inn.BottomHalfAtBats || []);
-    if (atBats.length) {
-      lastAtBat = atBats[atBats.length - 1];
-      break;
-    }
+  // Batter last name
+  if (offense.batter && offense.batter.fullName) {
+    var np = offense.batter.fullName.split(" ");
+    result.batter = np[np.length - 1].substring(0, 13);
   }
-  if (!lastAtBat) return result;
-
-  // Batter — last name only
-  var batter = lastAtBat.Hitter || lastAtBat.BatterName || "";
-  if (batter.indexOf(",") !== -1) {
-    batter = batter.split(",")[0].trim();
-  } else if (batter.indexOf(" ") !== -1) {
-    batter = batter.split(" ").pop();
-  }
-  result.batter = batter.substring(0, 13);
 
   // Base runners
-  result.onFirst  = lastAtBat.RunnerOnFirst  ? 1 : 0;
-  result.onSecond = lastAtBat.RunnerOnSecond ? 1 : 0;
-  result.onThird  = lastAtBat.RunnerOnThird  ? 1 : 0;
+  result.onFirst  = offense.first  ? 1 : 0;
+  result.onSecond = offense.second ? 1 : 0;
+  result.onThird  = offense.third  ? 1 : 0;
 
-  // Last pitch/play
-  var plays = lastAtBat.Pitches || lastAtBat.Plays || [];
-  if (plays.length) {
-    var last = plays[plays.length - 1];
-    result.pitchSpeed = last.Speed || last.PitchSpeed || 0;
-    var desc = last.Description || last.Result || last.Type || "";
-    result.pitchType = extractPitchType(desc);
-    result.lastPlay  = describePlay(desc);
+  // Current play
+  var plays       = ld.plays || {};
+  var currentPlay = plays.currentPlay || {};
+  var playResult  = currentPlay.result || {};
+  result.lastPlay = describePlay(playResult.description || "");
+
+  // Last pitch in current play
+  var playEvents = currentPlay.playEvents || [];
+  for (var i = playEvents.length - 1; i >= 0; i--) {
+    var ev = playEvents[i];
+    if (ev.isPitch) {
+      var pd      = ev.pitchData || {};
+      var details = ev.details  || {};
+      var typeObj = details.type || {};
+      result.pitchSpeed = Math.round(pd.startSpeed || 0);
+      result.pitchType  = pitchCodeToAbbr(typeObj.code || "");
+      break;
+    }
   }
 
   return result;
@@ -303,17 +247,22 @@ function extractPBP(pbpData) {
 // ── Game data fetch ───────────────────────────────────────────────────────
 function fetchGameData(teamIdx) {
   var abbr = TEAMS[teamIdx].abbr;
-  var url  = BASE_URL + "/" + todayDateStr() + "?key=" + API_KEY;
+  var url  = SCHEDULE_URL + "?sportId=1&date=" + todayDateStr() + "&hydrate=linescore,team";
   console.log("[MLB] Fetching for " + abbr);
   var xhr = new XMLHttpRequest();
   xhr.open("GET", url, true);
   xhr.setRequestHeader("Accept", "application/json");
   xhr.onload = function() {
-    if (xhr.status !== 200) { sendOffMessage(); return; }
+    if (xhr.status !== 200) {
+      console.log("[MLB] API error: " + xhr.status);
+      sendOffMessage();
+      return;
+    }
     try {
-      var games = JSON.parse(xhr.responseText);
-      gAllGames = Array.isArray(games) ? games : [];
-      processGames(gAllGames, abbr);
+      var data  = JSON.parse(xhr.responseText);
+      var games = (data.dates && data.dates.length > 0) ? (data.dates[0].games || []) : [];
+      gAllGames = games;
+      processGames(games, abbr);
     } catch(e) {
       console.log("[MLB] Parse error: " + e);
       sendOffMessage();
@@ -327,13 +276,13 @@ function processGames(games, abbr) {
   if (!Array.isArray(games) || !games.length) { sendOffMessage(); return; }
 
   var target = abbr.toUpperCase();
-
-  // Find game 1 (and optionally game 2 for doubleheaders)
   var game1 = null, game2 = null;
+
   for (var i = 0; i < games.length; i++) {
-    var g = games[i];
-    if ((g.AwayTeam && g.AwayTeam.toUpperCase() === target) ||
-        (g.HomeTeam && g.HomeTeam.toUpperCase() === target)) {
+    var g     = games[i];
+    var awayA = toInternal((g.teams.away.team.abbreviation || "").toUpperCase());
+    var homeA = toInternal((g.teams.home.team.abbreviation || "").toUpperCase());
+    if (awayA === target || homeA === target) {
       if (!game1) game1 = g;
       else if (!game2) game2 = g;
     }
@@ -341,97 +290,84 @@ function processGames(games, abbr) {
 
   if (!game1) { sendOffMessage(); return; }
 
-  var raw    = (game1.Status || "").toLowerCase();
-  var status = raw === "inprogress" ? "live"
-             : raw === "final"      ? "final"
-             : raw === "scheduled"  ? "pre"
+  var state  = (game1.status && game1.status.abstractGameState) || "";
+  var status = state === "Live"    ? "live"
+             : state === "Final"   ? "final"
+             : state === "Preview" ? "pre"
              : "off";
 
-  var awayAbbr  = (game1.AwayTeam || "---").toUpperCase();
-  var homeAbbr  = (game1.HomeTeam || "---").toUpperCase();
-  var startTime = formatStartTime(game1.DateTime || game1.Day || "");
-  var awayS     = gStandings[awayAbbr] || { wins: 0, losses: 0 };
-  var homeS     = gStandings[homeAbbr] || { wins: 0, losses: 0 };
-
-  // Weather from game data if available
-  var weather = "";
-  if (game1.Temperature)  weather = game1.Temperature + "F";
-  else if (game1.Weather) weather = game1.Weather.substring(0, 15);
+  var awayAbbr = toInternal((game1.teams.away.team.abbreviation || "---").toUpperCase());
+  var homeAbbr = toInternal((game1.teams.home.team.abbreviation || "---").toUpperCase());
+  var awayRec  = game1.teams.away.leagueRecord || {};
+  var homeRec  = game1.teams.home.leagueRecord || {};
+  var ls       = game1.linescore || {};
+  var offense  = ls.offense || {};
 
   // Game 2 (doubleheader)
-  var g2status = "";
-  var g2score  = "";
+  var g2status = "", g2score = "";
   if (game2) {
-    var r2 = (game2.Status || "").toLowerCase();
-    g2status = r2 === "inprogress" ? "live"
-             : r2 === "final"      ? "final"
-             : r2 === "scheduled"  ? "pre" : "off";
-    if (g2status !== "off" && g2status !== "pre") {
-      g2score = awayAbbr + " " + (game2.AwayTeamRuns || 0) + " - " +
-                homeAbbr + " " + (game2.HomeTeamRuns || 0);
+    var s2   = (game2.status && game2.status.abstractGameState) || "";
+    g2status = s2 === "Live"    ? "live"
+             : s2 === "Final"   ? "final"
+             : s2 === "Preview" ? "pre" : "off";
+    if (g2status === "pre") {
+      g2score = formatStartTime(game2.gameDate || "");
+    } else if (g2status !== "off") {
+      var ls2 = game2.linescore || {};
+      g2score = awayAbbr + " " + (game2.teams.away.score || 0) + " - " +
+                homeAbbr + " " + (game2.teams.home.score || 0);
       if (g2status === "live") {
-        var h2 = game2.InningHalf === "B" ? "Bot" : "Top";
-        g2score += " " + h2 + " " + (game2.Inning || "");
+        g2score += " " + (ls2.isTopInning ? "Top" : "Bot") + " " + (ls2.currentInning || "");
       } else {
         g2score += " F";
       }
-    } else if (g2status === "pre") {
-      g2score = formatStartTime(game2.DateTime || game2.Day || "");
     }
   }
 
-  // Ticker — all other games today
-  var ticker = buildTicker(games, target);
-
-  // Base message
   var msg = {};
   msg[KEY_AWAY_ABBR]    = awayAbbr;
   msg[KEY_HOME_ABBR]    = homeAbbr;
-  msg[KEY_AWAY_SCORE]   = game1.AwayTeamRuns !== null && game1.AwayTeamRuns !== undefined ? game1.AwayTeamRuns : 0;
-  msg[KEY_HOME_SCORE]   = game1.HomeTeamRuns !== null && game1.HomeTeamRuns !== undefined ? game1.HomeTeamRuns : 0;
-  msg[KEY_INNING]       = game1.Inning    || 0;
-  msg[KEY_INNING_HALF]  = game1.InningHalf === "B" ? 1 : 0;
-  msg[KEY_BALLS]        = game1.Balls     || 0;
-  msg[KEY_STRIKES]      = game1.Strikes   || 0;
-  msg[KEY_OUTS]         = game1.Outs      || 0;
+  msg[KEY_AWAY_SCORE]   = game1.teams.away.score || 0;
+  msg[KEY_HOME_SCORE]   = game1.teams.home.score || 0;
+  msg[KEY_INNING]       = ls.currentInning || 0;
+  msg[KEY_INNING_HALF]  = ls.isTopInning ? 0 : 1;
+  msg[KEY_BALLS]        = ls.balls   || 0;
+  msg[KEY_STRIKES]      = ls.strikes || 0;
+  msg[KEY_OUTS]         = ls.outs    || 0;
   msg[KEY_STATUS]       = status;
-  msg[KEY_START_TIME]   = startTime;
-  msg[KEY_AWAY_WINS]    = awayS.wins;
-  msg[KEY_AWAY_LOSSES]  = awayS.losses;
-  msg[KEY_HOME_WINS]    = homeS.wins;
-  msg[KEY_HOME_LOSSES]  = homeS.losses;
+  msg[KEY_START_TIME]   = formatStartTime(game1.gameDate || "");
+  msg[KEY_AWAY_WINS]    = awayRec.wins   || 0;
+  msg[KEY_AWAY_LOSSES]  = awayRec.losses || 0;
+  msg[KEY_HOME_WINS]    = homeRec.wins   || 0;
+  msg[KEY_HOME_LOSSES]  = homeRec.losses || 0;
   msg[KEY_VIBRATE]      = gVibrate ? 1 : 0;
   msg[KEY_BATTER]       = "";
   msg[KEY_PITCH_SPEED]  = 0;
   msg[KEY_LAST_PLAY]    = "";
-  msg[KEY_ON_FIRST]     = 0;
-  msg[KEY_ON_SECOND]    = 0;
-  msg[KEY_ON_THIRD]     = 0;
+  msg[KEY_ON_FIRST]     = offense.first  ? 1 : 0;
+  msg[KEY_ON_SECOND]    = offense.second ? 1 : 0;
+  msg[KEY_ON_THIRD]     = offense.third  ? 1 : 0;
   msg[KEY_NEXT_GAME]    = "";
   msg[KEY_BATTERY_BAR]  = gBatteryBar ? 1 : 0;
-  msg[KEY_TICKER]       = ticker;
-  msg[KEY_WEATHER]      = weather;
+  msg[KEY_TICKER]       = buildTicker(games, target);
+  msg[KEY_WEATHER]      = "";
   msg[KEY_PITCH_TYPE]   = "";
   msg[KEY_GAME2_STATUS] = g2status;
   msg[KEY_GAME2_SCORE]  = g2score;
 
-  // Fetch play-by-play for live games
-  if (status === "live") {
-    var gameId = game1.GameID || game1.ScoreID || null;
-    if (gameId) {
-      fetchPlayByPlay(gameId, function(pbpData) {
-        var pbp = extractPBP(pbpData);
-        msg[KEY_BATTER]      = pbp.batter;
-        msg[KEY_PITCH_SPEED] = pbp.pitchSpeed;
-        msg[KEY_LAST_PLAY]   = pbp.lastPlay;
-        msg[KEY_ON_FIRST]    = pbp.onFirst;
-        msg[KEY_ON_SECOND]   = pbp.onSecond;
-        msg[KEY_ON_THIRD]    = pbp.onThird;
-        msg[KEY_PITCH_TYPE]  = pbp.pitchType;
-        sendMessage(msg);
-      });
-      return;
-    }
+  if (status === "live" && game1.gamePk) {
+    fetchLiveGame(game1.gamePk, function(liveData) {
+      var pbp = extractLivePBP(liveData);
+      msg[KEY_BATTER]      = pbp.batter;
+      msg[KEY_PITCH_SPEED] = pbp.pitchSpeed;
+      msg[KEY_LAST_PLAY]   = pbp.lastPlay;
+      msg[KEY_ON_FIRST]    = pbp.onFirst;
+      msg[KEY_ON_SECOND]   = pbp.onSecond;
+      msg[KEY_ON_THIRD]    = pbp.onThird;
+      msg[KEY_PITCH_TYPE]  = pbp.pitchType;
+      sendMessage(msg);
+    });
+    return;
   }
 
   sendMessage(msg);
@@ -444,8 +380,23 @@ function sendOffMessage() {
 }
 
 function sendMessage(dict) {
+  // Send TICKER in a separate message to avoid 512-byte inbox overflow.
+  // A full game message + long ticker string can exceed the buffer.
+  var ticker = dict[KEY_TICKER];
+  delete dict[KEY_TICKER];
+
   Pebble.sendAppMessage(dict,
-    function()  { console.log("[MLB] Message sent OK"); },
+    function() {
+      console.log("[MLB] Message sent OK");
+      if (ticker !== undefined) {
+        var tm = {};
+        tm[KEY_TICKER] = ticker;
+        Pebble.sendAppMessage(tm,
+          function()  { console.log("[MLB] Ticker sent OK"); },
+          function(e) { console.log("[MLB] Ticker NACK: " + JSON.stringify(e)); }
+        );
+      }
+    },
     function(e) { console.log("[MLB] NACK: " + JSON.stringify(e)); }
   );
 }
@@ -453,9 +404,7 @@ function sendMessage(dict) {
 // ── Pebble events ─────────────────────────────────────────────────────────
 Pebble.addEventListener("ready", function() {
   console.log("[MLB] Ready – team: " + TEAMS[gTeamIdx].abbr);
-  fetchStandings(function() {
-    fetchGameData(gTeamIdx);
-  });
+  fetchGameData(gTeamIdx);
 });
 
 Pebble.addEventListener("appmessage", function(e) {
@@ -470,44 +419,50 @@ Pebble.addEventListener("appmessage", function(e) {
 
 // ── Settings ───────────────────────────────────────────────────────────────
 Pebble.addEventListener("showConfiguration", function() {
+  // gTickerSpeed is a string ("5000","10000", etc.) — safe to concatenate directly
   var url = CONFIG_URL + "?v=2" + "#" + gTeamIdx +
     "|" + (gVibrate    ? "1" : "0") +
     "|" + (gBatteryBar ? "1" : "0") +
     "|" + gTzOffset +
     "|" + gTickerSpeed;
+  console.log("[MLB] showConfiguration url: " + url);
   Pebble.openURL(url);
 });
 
 Pebble.addEventListener("webviewclosed", function(e) {
+  console.log("[MLB] webviewclosed response: " + e.response);
   if (!e.response) return;
   try {
     var cfg = JSON.parse(decodeURIComponent(e.response));
+    console.log("[MLB] webviewclosed cfg: " + JSON.stringify(cfg));
     var idx = parseInt(cfg.teamIdx);
     if (isNaN(idx) || idx < 0 || idx >= TEAMS.length) return;
 
-    gTeamIdx     = idx;
-    gVibrate     = cfg.vibrate    === 1 || cfg.vibrate    === true || cfg.vibrate    === "1";
-    gBatteryBar  = cfg.batteryBar === 1 || cfg.batteryBar === true || cfg.batteryBar === "1";
-    gTzOffset    = parseInt(cfg.tzOffset)    || -5;
-    gTickerSpeed = parseInt(cfg.tickerSpeed) || 5000;
+    gTeamIdx    = idx;
+    gVibrate    = cfg.vibrate    === 1 || cfg.vibrate    === true || cfg.vibrate    === "1";
+    gBatteryBar = cfg.batteryBar === 1 || cfg.batteryBar === true || cfg.batteryBar === "1";
+    gTzOffset   = parseInt(cfg.tzOffset) || -5;
+    // cfg.tickerSpeed is a number (e.g. 10000). Convert to string via JSON.stringify
+    // (the only safe number→string in Pebble JS — + operator truncates large numbers).
+    var spdStr = JSON.stringify(cfg.tickerSpeed);
+    gTickerSpeed = validSpeedStr(spdStr) ? spdStr : "5000"; // STRING
 
     localStorage.setItem("teamIdx",     String(gTeamIdx));
     localStorage.setItem("vibrate",     gVibrate    ? "1" : "0");
     localStorage.setItem("batteryBar",  gBatteryBar ? "1" : "0");
     localStorage.setItem("tzOffset",    String(gTzOffset));
-    localStorage.setItem("tickerSpeed", String(gTickerSpeed));
+    localStorage.setItem("tickerSpeed", gTickerSpeed); // already a string
 
     console.log("[MLB] Settings – team: " + TEAMS[gTeamIdx].abbr +
       " vibrate: " + gVibrate + " battery: " + gBatteryBar +
       " tz: " + gTzOffset + " tickerSpeed: " + gTickerSpeed);
 
-    // Send settings to watch, then refresh game data
     var settingsMsg = {};
     settingsMsg[KEY_TEAM_IDX]     = gTeamIdx;
     settingsMsg[KEY_VIBRATE]      = gVibrate    ? 1 : 0;
     settingsMsg[KEY_BATTERY_BAR]  = gBatteryBar ? 1 : 0;
     settingsMsg[KEY_TZ_OFFSET]    = gTzOffset;
-    settingsMsg[KEY_TICKER_SPEED] = gTickerSpeed;
+    settingsMsg[KEY_TICKER_SPEED] = SPEED_NUM[gTickerSpeed] || 5000; // send as number
     Pebble.sendAppMessage(settingsMsg,
       function() { fetchGameData(gTeamIdx); },
       function() { fetchGameData(gTeamIdx); }

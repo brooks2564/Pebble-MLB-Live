@@ -2,9 +2,13 @@
   "name": "mlb-live-scores",
   "author": "Brooman Inks",
   "version": "3.0.0",
-  "keywords": ["pebble-app"],
+  "keywords": [
+    "pebble-app"
+  ],
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "pebble-clay": "^1.0.4"
+  },
   "pebble": {
     "displayName": "MLB Live",
     "shortName": "MLB Live",
@@ -16,45 +20,46 @@
       "aplite",
       "basalt",
       "diorite",
-      "emery",
-      "flint"
+      "emery"
     ],
     "watchapp": {
       "watchface": true
     },
-    "capabilities": ["configurable"],
+    "capabilities": [
+      "configurable"
+    ],
     "messageKeys": {
-      "AWAY_ABBR":    1,
-      "HOME_ABBR":    2,
-      "AWAY_SCORE":   3,
-      "HOME_SCORE":   4,
-      "INNING":       5,
-      "INNING_HALF":  6,
-      "BALLS":        7,
-      "STRIKES":      8,
-      "OUTS":         9,
-      "STATUS":       10,
-      "TEAM_IDX":     11,
-      "START_TIME":   12,
-      "AWAY_WINS":    13,
-      "AWAY_LOSSES":  14,
-      "HOME_WINS":    15,
-      "HOME_LOSSES":  16,
-      "VIBRATE":      17,
-      "BATTER":       18,
-      "PITCH_SPEED":  19,
-      "LAST_PLAY":    20,
-      "ON_FIRST":     21,
-      "ON_SECOND":    22,
-      "ON_THIRD":     23,
-      "NEXT_GAME":    24,
-      "BATTERY_BAR":  25,
-      "TICKER":       26,
-      "WEATHER":      27,
-      "PITCH_TYPE":   28,
+      "AWAY_ABBR": 1,
+      "HOME_ABBR": 2,
+      "AWAY_SCORE": 3,
+      "HOME_SCORE": 4,
+      "INNING": 5,
+      "INNING_HALF": 6,
+      "BALLS": 7,
+      "STRIKES": 8,
+      "OUTS": 9,
+      "STATUS": 10,
+      "TEAM_IDX": 11,
+      "START_TIME": 12,
+      "AWAY_WINS": 13,
+      "AWAY_LOSSES": 14,
+      "HOME_WINS": 15,
+      "HOME_LOSSES": 16,
+      "VIBRATE": 17,
+      "BATTER": 18,
+      "PITCH_SPEED": 19,
+      "LAST_PLAY": 20,
+      "ON_FIRST": 21,
+      "ON_SECOND": 22,
+      "ON_THIRD": 23,
+      "NEXT_GAME": 24,
+      "BATTERY_BAR": 25,
+      "TICKER": 26,
+      "WEATHER": 27,
+      "PITCH_TYPE": 28,
       "GAME2_STATUS": 29,
-      "GAME2_SCORE":  30,
-      "TZ_OFFSET":    31,
+      "GAME2_SCORE": 30,
+      "TZ_OFFSET": 31,
       "TICKER_SPEED": 32
     },
     "resources": {
@@ -69,7 +74,9 @@
           "type": "png",
           "name": "IMAGE_BALLDIAMOND",
           "file": "images/balldiamond.png",
-          "targetPlatforms": ["emery"]
+          "targetPlatforms": [
+            "emery"
+          ]
         }
       ]
     }

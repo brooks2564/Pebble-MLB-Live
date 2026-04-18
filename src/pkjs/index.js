@@ -1,4 +1,6 @@
 // ── MLB Live Watchface  ·  PebbleKit JS ───────────────────────────────────
+var Clay = require('pebble-clay');
+var clayConfig = require('./config.json');
 var SIM_MODE = false;
 function sendSimGame() {
   var msg = {};
@@ -68,7 +70,7 @@ var KEY_TICKER_SPEED = 32;
 // Official MLB Stats API — free, no key required
 var SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule";
 var LIVE_URL     = "https://statsapi.mlb.com/api/v1.1/game";
-var CONFIG_URL   = "https://brooks2564.github.io/Pebble-MLB-Live/mlb-config.html";
+var clay = new Clay(clayConfig, null, { autoHandleEvents: false });
 
 // MLB Stats API uses shorter abbreviations for 5 teams — map to our internal 3-letter abbrs
 var MLB_TO_INTERNAL = { "KC":"KCR", "SD":"SDP", "SF":"SFG", "TB":"TBR", "WSH":"WSN" };
@@ -108,18 +110,23 @@ var TEAMS = [
 ];
 
 // ── Saved state ────────────────────────────────────────────────────────────
-var gTeamIdx    = parseInt(localStorage.getItem("teamIdx")  || "13");
-var gVibrate    = localStorage.getItem("vibrate")    !== "0";
-var gBatteryBar = localStorage.getItem("batteryBar") !== "0";
-var gTzOffset   = parseInt(localStorage.getItem("tzOffset") || "-5");
-// Ticker speed stored/used as a STRING to avoid Pebble JS number truncation bugs.
-// Pebble's + operator and parseInt truncate multi-digit numbers to 3 chars.
-// JSON.stringify is the only safe number→string conversion.
+// Clay stores all settings as one JSON object under 'clay-settings' in localStorage.
 function validSpeedStr(s) {
   return s === "5000" || s === "10000" || s === "30000" || s === "60000";
 }
 var SPEED_NUM = {"5000":5000, "10000":10000, "30000":30000, "60000":60000};
-var _rawSpd    = localStorage.getItem("tickerSpeed");
+
+var _cs = {};
+try { _cs = JSON.parse(localStorage.getItem("clay-settings")) || {}; } catch(e) {}
+
+var gTeamIdx    = typeof _cs.TEAM_IDX === "number" ? _cs.TEAM_IDX : 13;
+var gVibrate    = _cs.VIBRATE    === undefined ? true : !!_cs.VIBRATE;
+var gBatteryBar = _cs.BATTERY_BAR === undefined ? true : !!_cs.BATTERY_BAR;
+var gTzOffset   = typeof _cs.TZ_OFFSET === "number" ? _cs.TZ_OFFSET : -5;
+// Ticker speed stored/used as a STRING to avoid Pebble JS number truncation bugs.
+// Pebble's + operator and parseInt truncate multi-digit numbers to 3 chars.
+// JSON.stringify is the only safe number→string conversion.
+var _rawSpd      = _cs.TICKER_SPEED !== undefined ? JSON.stringify(_cs.TICKER_SPEED) : null;
 var gTickerSpeed = validSpeedStr(_rawSpd) ? _rawSpd : "5000"; // STRING, e.g. "10000"
 var gAllGames   = [];
 
@@ -516,41 +523,29 @@ Pebble.addEventListener("appmessage", function(e) {
   fetchGameData(gTeamIdx);
 });
 
-// ── Settings ───────────────────────────────────────────────────────────────
+// ── Settings (Clay) ────────────────────────────────────────────────────────
 Pebble.addEventListener("showConfiguration", function() {
-  // gTickerSpeed is a string ("5000","10000", etc.) — safe to concatenate directly
-  var url = CONFIG_URL + "?v=2" + "#" + gTeamIdx +
-    "|" + (gVibrate    ? "1" : "0") +
-    "|" + (gBatteryBar ? "1" : "0") +
-    "|" + gTzOffset +
-    "|" + gTickerSpeed;
-  console.log("[MLB] showConfiguration url: " + url);
-  Pebble.openURL(url);
+  Pebble.openURL(clay.generateUrl());
 });
 
 Pebble.addEventListener("webviewclosed", function(e) {
-  console.log("[MLB] webviewclosed response: " + e.response);
   if (!e.response) return;
   try {
-    var cfg = JSON.parse(decodeURIComponent(e.response));
-    console.log("[MLB] webviewclosed cfg: " + JSON.stringify(cfg));
-    var idx = parseInt(cfg.teamIdx);
-    if (isNaN(idx) || idx < 0 || idx >= TEAMS.length) return;
+    // getSettings saves to 'clay-settings' in localStorage; convert=false to skip
+    // auto-sending AppMessage (we send manually to include the fetchGameData callback)
+    clay.getSettings(e.response, false);
+
+    var cs = JSON.parse(localStorage.getItem("clay-settings")) || {};
+    var idx = typeof cs.TEAM_IDX === "number" ? cs.TEAM_IDX : gTeamIdx;
+    if (idx < 0 || idx >= TEAMS.length) return;
 
     gTeamIdx    = idx;
-    gVibrate    = cfg.vibrate    === 1 || cfg.vibrate    === true || cfg.vibrate    === "1";
-    gBatteryBar = cfg.batteryBar === 1 || cfg.batteryBar === true || cfg.batteryBar === "1";
-    gTzOffset   = parseInt(cfg.tzOffset) || -5;
-    // cfg.tickerSpeed is a number (e.g. 10000). Convert to string via JSON.stringify
-    // (the only safe number→string in Pebble JS — + operator truncates large numbers).
-    var spdStr = JSON.stringify(cfg.tickerSpeed);
+    gVibrate    = cs.VIBRATE    === undefined ? true : !!cs.VIBRATE;
+    gBatteryBar = cs.BATTERY_BAR === undefined ? true : !!cs.BATTERY_BAR;
+    gTzOffset   = typeof cs.TZ_OFFSET === "number" ? cs.TZ_OFFSET : -5;
+    // Use JSON.stringify for safe number→string (Pebble JS truncates with + or parseInt)
+    var spdStr   = cs.TICKER_SPEED !== undefined ? JSON.stringify(cs.TICKER_SPEED) : null;
     gTickerSpeed = validSpeedStr(spdStr) ? spdStr : "5000"; // STRING
-
-    localStorage.setItem("teamIdx",     String(gTeamIdx));
-    localStorage.setItem("vibrate",     gVibrate    ? "1" : "0");
-    localStorage.setItem("batteryBar",  gBatteryBar ? "1" : "0");
-    localStorage.setItem("tzOffset",    String(gTzOffset));
-    localStorage.setItem("tickerSpeed", gTickerSpeed); // already a string
 
     console.log("[MLB] Settings – team: " + TEAMS[gTeamIdx].abbr +
       " vibrate: " + gVibrate + " battery: " + gBatteryBar +
@@ -561,7 +556,7 @@ Pebble.addEventListener("webviewclosed", function(e) {
     settingsMsg[KEY_VIBRATE]      = gVibrate    ? 1 : 0;
     settingsMsg[KEY_BATTERY_BAR]  = gBatteryBar ? 1 : 0;
     settingsMsg[KEY_TZ_OFFSET]    = gTzOffset;
-    settingsMsg[KEY_TICKER_SPEED] = SPEED_NUM[gTickerSpeed] || 5000; // send as number
+    settingsMsg[KEY_TICKER_SPEED] = SPEED_NUM[gTickerSpeed] || 5000;
     Pebble.sendAppMessage(settingsMsg,
       function() { fetchGameData(gTeamIdx); },
       function() { fetchGameData(gTeamIdx); }

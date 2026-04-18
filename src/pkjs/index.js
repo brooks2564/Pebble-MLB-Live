@@ -1,5 +1,5 @@
 // ── MLB Live Watchface  ·  PebbleKit JS ───────────────────────────────────
-var SIM_MODE = true;
+var SIM_MODE = false;
 function sendSimGame() {
   var msg = {};
   msg[KEY_AWAY_ABBR]    = "NYY";

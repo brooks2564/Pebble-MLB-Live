@@ -1,4 +1,36 @@
 // ── MLB Live Watchface  ·  PebbleKit JS ───────────────────────────────────
+var SIM_MODE = false;
+function sendSimGame() {
+  var msg = {};
+  msg[KEY_AWAY_ABBR]    = "CWS";
+  msg[KEY_HOME_ABBR]    = "ATH";
+  msg[KEY_AWAY_SCORE]   = 3;
+  msg[KEY_HOME_SCORE]   = 2;
+  msg[KEY_INNING]       = 7;
+  msg[KEY_INNING_HALF]  = 1; // Bot
+  msg[KEY_BALLS]        = 2;
+  msg[KEY_STRIKES]      = 1;
+  msg[KEY_OUTS]         = 1;
+  msg[KEY_STATUS]       = "live";
+  msg[KEY_AWAY_WINS]    = 10;
+  msg[KEY_AWAY_LOSSES]  = 8;
+  msg[KEY_HOME_WINS]    = 9;
+  msg[KEY_HOME_LOSSES]  = 9;
+  msg[KEY_VIBRATE]      = 0;
+  msg[KEY_BATTER]       = "Langeliers";
+  msg[KEY_PITCH_SPEED]  = 94;
+  msg[KEY_PITCH_TYPE]   = "FB";
+  msg[KEY_LAST_PLAY]    = "Walk";
+  msg[KEY_ON_FIRST]     = 1;
+  msg[KEY_ON_SECOND]    = 1;
+  msg[KEY_ON_THIRD]     = 1;
+  msg[KEY_NEXT_GAME]    = "";
+  msg[KEY_BATTERY_BAR]  = 1;
+  msg[KEY_WEATHER]      = "";
+  msg[KEY_GAME2_STATUS] = "";
+  msg[KEY_GAME2_SCORE]  = "";
+  sendMessage(msg);
+}
 // Keys must match #define KEY_* in main.c exactly
 var KEY_AWAY_ABBR    = 1;
 var KEY_HOME_ABBR    = 2;
@@ -155,9 +187,9 @@ function describePlay(desc) {
 
 // Map MLB Stats API pitch type codes to short display strings
 var PITCH_CODE_MAP = {
-  "FF":"FB", "FA":"FB", "SI":"SIN", "FT":"SIN",
-  "CU":"CRV", "KC":"CRV", "SL":"SL", "ST":"SWP",
-  "CH":"CH", "FS":"SPL", "FC":"CUT", "KN":"KN"
+  "FF":"Fastball", "FA":"Fastball", "SI":"Sinker", "FT":"Sinker",
+  "CU":"Curveball", "KC":"Curveball", "SL":"Slider", "ST":"Sweeper",
+  "CH":"Changeup", "FS":"Splitter", "FC":"Cutter", "KN":"Knuckle"
 };
 function pitchCodeToAbbr(code) { return PITCH_CODE_MAP[code] || ""; }
 
@@ -256,6 +288,7 @@ function extractLivePBP(liveData) {
 
 // ── Game data fetch ───────────────────────────────────────────────────────
 function fetchGameData(teamIdx) {
+  if (SIM_MODE) { sendSimGame(); return; }
   var abbr      = TEAMS[teamIdx].abbr;
   var today     = todayDateStr();
   var yesterday = yesterdayDateStr();

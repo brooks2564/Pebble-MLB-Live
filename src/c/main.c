@@ -449,16 +449,21 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   // Diamond
 #ifdef PBL_COLOR
   if (s_diamond_bmp) {
-    int img_x = w - 94;
-    int img_y = by + 58;
-    graphics_draw_bitmap_in_rect(ctx, s_diamond_bmp, GRect(img_x, img_y, 90, 90));
-    // Runner dots overlaid on base positions (tuned to 90x90 image)
-    GPoint base2 = GPoint(img_x + 45, img_y + 27); // 2nd base
-    GPoint base1 = GPoint(img_x + 63, img_y + 38); // 1st base
-    GPoint base3 = GPoint(img_x + 27, img_y + 38); // 3rd base
-    if (s_on_second) { graphics_context_set_fill_color(ctx, GColorYellow); graphics_fill_circle(ctx, base2, 5); }
-    if (s_on_first)  { graphics_context_set_fill_color(ctx, GColorYellow); graphics_fill_circle(ctx, base1, 5); }
-    if (s_on_third)  { graphics_context_set_fill_color(ctx, GColorYellow); graphics_fill_circle(ctx, base3, 5); }
+    int img_x = w - 90;
+    int img_y = by + 95;
+    graphics_draw_bitmap_in_rect(ctx, s_diamond_bmp, GRect(img_x, img_y, 60, 60));
+    // Base positions tuned to 60x60 image
+    GPoint base2 = GPoint(img_x + 29, img_y + 17); // 2nd base
+    GPoint base1 = GPoint(img_x + 44, img_y + 32); // 1st base
+    GPoint base3 = GPoint(img_x + 14, img_y + 32); // 3rd base
+    GPoint home  = GPoint(img_x + 29, img_y + 48); // home plate (batter)
+    // Runner dots (red = on base)
+    if (s_on_second) { graphics_context_set_fill_color(ctx, GColorRed); graphics_fill_circle(ctx, base2, 4); }
+    if (s_on_first)  { graphics_context_set_fill_color(ctx, GColorRed); graphics_fill_circle(ctx, base1, 4); }
+    if (s_on_third)  { graphics_context_set_fill_color(ctx, GColorRed); graphics_fill_circle(ctx, base3, 4); }
+    // Batter dot at home plate (always shown during live game)
+    graphics_context_set_fill_color(ctx, GColorRed);
+    graphics_fill_circle(ctx, home, 4);
   }
 #else
   {

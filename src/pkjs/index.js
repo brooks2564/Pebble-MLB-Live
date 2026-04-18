@@ -62,7 +62,7 @@ var TEAMS = [
   { abbr: "MIN", name: "Twins"     },
   { abbr: "NYM", name: "Mets"      },
   { abbr: "NYY", name: "Yankees"   },
-  { abbr: "OAK", name: "Athletics" },
+  { abbr: "ATH", name: "Athletics" },
   { abbr: "PHI", name: "Phillies"  },
   { abbr: "PIT", name: "Pirates"   },
   { abbr: "SDP", name: "Padres"    },
@@ -94,6 +94,16 @@ var gAllGames   = [];
 // ── Utility ───────────────────────────────────────────────────────────────
 function todayDateStr() {
   var d  = new Date();
+  var mm = d.getMonth() + 1;
+  var dd = d.getDate();
+  return d.getFullYear() + "-" +
+    (mm < 10 ? "0" + mm : mm) + "-" +
+    (dd < 10 ? "0" + dd : dd);
+}
+
+function yesterdayDateStr() {
+  var d  = new Date();
+  d.setDate(d.getDate() - 1);
   var mm = d.getMonth() + 1;
   var dd = d.getDate();
   return d.getFullYear() + "-" +
@@ -246,9 +256,11 @@ function extractLivePBP(liveData) {
 
 // ── Game data fetch ───────────────────────────────────────────────────────
 function fetchGameData(teamIdx) {
-  var abbr = TEAMS[teamIdx].abbr;
-  var url  = SCHEDULE_URL + "?sportId=1&date=" + todayDateStr() + "&hydrate=linescore,team";
-  console.log("[MLB] Fetching for " + abbr);
+  var abbr      = TEAMS[teamIdx].abbr;
+  var today     = todayDateStr();
+  var yesterday = yesterdayDateStr();
+  var url = SCHEDULE_URL + "?sportId=1&startDate=" + yesterday + "&endDate=" + today + "&hydrate=linescore,team";
+  console.log("[MLB] Fetching for " + abbr + " (" + yesterday + " to " + today + ")");
   var xhr = new XMLHttpRequest();
   xhr.open("GET", url, true);
   xhr.setRequestHeader("Accept", "application/json");
@@ -260,9 +272,14 @@ function fetchGameData(teamIdx) {
     }
     try {
       var data  = JSON.parse(xhr.responseText);
-      var games = (data.dates && data.dates.length > 0) ? (data.dates[0].games || []) : [];
-      gAllGames = games;
-      processGames(games, abbr);
+      var dates = data.dates || [];
+      // Collect today's games for ticker and next-game lookup
+      var todayGames = [];
+      for (var d = 0; d < dates.length; d++) {
+        if (dates[d].date === today) { todayGames = dates[d].games || []; break; }
+      }
+      gAllGames = todayGames;
+      processGames(dates, todayGames, abbr, today, yesterday);
     } catch(e) {
       console.log("[MLB] Parse error: " + e);
       sendOffMessage();
@@ -272,20 +289,39 @@ function fetchGameData(teamIdx) {
   xhr.send();
 }
 
-function processGames(games, abbr) {
-  if (!Array.isArray(games) || !games.length) { sendOffMessage(); return; }
-
-  var target = abbr.toUpperCase();
-  var game1 = null, game2 = null;
-
-  for (var i = 0; i < games.length; i++) {
-    var g     = games[i];
+function findTeamGame(gamesList, target, stateFilter) {
+  for (var i = 0; i < gamesList.length; i++) {
+    var g     = gamesList[i];
     var awayA = toInternal((g.teams.away.team.abbreviation || "").toUpperCase());
     var homeA = toInternal((g.teams.home.team.abbreviation || "").toUpperCase());
-    if (awayA === target || homeA === target) {
-      if (!game1) game1 = g;
-      else if (!game2) game2 = g;
+    if (awayA !== target && homeA !== target) continue;
+    var state = (g.status && g.status.abstractGameState) || "";
+    if (!stateFilter || state === stateFilter) return g;
+  }
+  return null;
+}
+
+function processGames(dates, todayGames, abbr, today, yesterday) {
+  var target = abbr.toUpperCase();
+
+  // Pass 1: LIVE game on any date (midnight crossing)
+  var game1 = null;
+  for (var d = 0; d < dates.length && !game1; d++) {
+    game1 = findTeamGame(dates[d].games || [], target, "Live");
+  }
+
+  // Pass 2: FINAL from today or yesterday
+  if (!game1) {
+    for (var d = 0; d < dates.length && !game1; d++) {
+      var dayDate = dates[d].date || "";
+      if (dayDate !== today && dayDate !== yesterday) continue;
+      game1 = findTeamGame(dates[d].games || [], target, "Final");
     }
+  }
+
+  // Pass 3: PRE-GAME from today
+  if (!game1) {
+    game1 = findTeamGame(todayGames, target, "Preview");
   }
 
   if (!game1) { sendOffMessage(); return; }
@@ -303,7 +339,23 @@ function processGames(games, abbr) {
   var ls       = game1.linescore || {};
   var offense  = ls.offense || {};
 
-  // Game 2 (doubleheader)
+  // Game 2 (doubleheader) — only look in same-date games as game1
+  var game1Date = (game1.officialDate || game1.gameDate || "").substring(0, 10);
+  var sameDateGames = [];
+  for (var d = 0; d < dates.length; d++) {
+    if ((dates[d].date || "") === game1Date) { sameDateGames = dates[d].games || []; break; }
+  }
+  var game2 = null;
+  var foundFirst = false;
+  for (var i = 0; i < sameDateGames.length; i++) {
+    var g     = sameDateGames[i];
+    var awayA = toInternal((g.teams.away.team.abbreviation || "").toUpperCase());
+    var homeA = toInternal((g.teams.home.team.abbreviation || "").toUpperCase());
+    if (awayA !== target && homeA !== target) continue;
+    if (!foundFirst) { foundFirst = true; continue; }
+    game2 = g; break;
+  }
+
   var g2status = "", g2score = "";
   if (game2) {
     var s2   = (game2.status && game2.status.abstractGameState) || "";
@@ -321,6 +373,20 @@ function processGames(games, abbr) {
       } else {
         g2score += " F";
       }
+    }
+  }
+
+  // Next game: when showing a final, look for a pre-game today
+  var nextGame = "";
+  if (status === "final" && !game2) {
+    var nextG = findTeamGame(todayGames, target, "Preview");
+    if (nextG) {
+      var nextAway = toInternal((nextG.teams.away.team.abbreviation || "").toUpperCase());
+      var nextHome = toInternal((nextG.teams.home.team.abbreviation || "").toUpperCase());
+      var opp      = (nextAway === target) ? nextHome : nextAway;
+      var t        = formatStartTime(nextG.gameDate || "");
+      nextGame     = opp + (t ? " " + t : "");
+      if (nextGame.length > 19) nextGame = nextGame.substring(0, 19);
     }
   }
 
@@ -347,9 +413,9 @@ function processGames(games, abbr) {
   msg[KEY_ON_FIRST]     = offense.first  ? 1 : 0;
   msg[KEY_ON_SECOND]    = offense.second ? 1 : 0;
   msg[KEY_ON_THIRD]     = offense.third  ? 1 : 0;
-  msg[KEY_NEXT_GAME]    = "";
+  msg[KEY_NEXT_GAME]    = nextGame;
   msg[KEY_BATTERY_BAR]  = gBatteryBar ? 1 : 0;
-  msg[KEY_TICKER]       = buildTicker(games, target);
+  msg[KEY_TICKER]       = buildTicker(todayGames, target);
   msg[KEY_WEATHER]      = "";
   msg[KEY_PITCH_TYPE]   = "";
   msg[KEY_GAME2_STATUS] = g2status;

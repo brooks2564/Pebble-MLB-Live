@@ -210,6 +210,55 @@ static void ticker_parse_and_start(void) {
   }
 }
 
+// ── Team colors ────────────────────────────────────────────────────────────
+#ifdef PBL_COLOR
+static GColor team_color(const char *abbr) {
+  if (!abbr) return GColorWhite;
+  if (strcmp(abbr,"ARI")==0) return GColorImperialPurple;
+  if (strcmp(abbr,"ATL")==0) return GColorRed;
+  if (strcmp(abbr,"BAL")==0) return GColorOrange;
+  if (strcmp(abbr,"BOS")==0) return GColorRed;
+  if (strcmp(abbr,"CHC")==0) return GColorCobaltBlue;
+  if (strcmp(abbr,"CWS")==0) return GColorLightGray;
+  if (strcmp(abbr,"CIN")==0) return GColorRed;
+  if (strcmp(abbr,"CLE")==0) return GColorRed;
+  if (strcmp(abbr,"COL")==0) return GColorImperialPurple;
+  if (strcmp(abbr,"DET")==0) return GColorOrange;
+  if (strcmp(abbr,"HOU")==0) return GColorOrange;
+  if (strcmp(abbr,"KCR")==0) return GColorCobaltBlue;
+  if (strcmp(abbr,"LAA")==0) return GColorRed;
+  if (strcmp(abbr,"LAD")==0) return GColorCobaltBlue;
+  if (strcmp(abbr,"MIA")==0) return GColorTiffanyBlue;
+  if (strcmp(abbr,"MIL")==0) return GColorYellow;
+  if (strcmp(abbr,"MIN")==0) return GColorRed;
+  if (strcmp(abbr,"NYM")==0) return GColorCobaltBlue;
+  if (strcmp(abbr,"NYY")==0) return GColorCobaltBlue;
+  if (strcmp(abbr,"OAK")==0) return GColorIslamicGreen;
+  if (strcmp(abbr,"PHI")==0) return GColorRed;
+  if (strcmp(abbr,"PIT")==0) return GColorYellow;
+  if (strcmp(abbr,"SDP")==0) return GColorYellow;
+  if (strcmp(abbr,"SEA")==0) return GColorTiffanyBlue;
+  if (strcmp(abbr,"SFG")==0) return GColorOrange;
+  if (strcmp(abbr,"STL")==0) return GColorRed;
+  if (strcmp(abbr,"TBR")==0) return GColorCobaltBlue;
+  if (strcmp(abbr,"TEX")==0) return GColorCobaltBlue;
+  if (strcmp(abbr,"TOR")==0) return GColorCobaltBlue;
+  if (strcmp(abbr,"WSN")==0) return GColorRed;
+  return GColorWhite;
+}
+
+static void draw_team_text(GContext *ctx, const char *text, GFont font, GRect rect,
+                           GTextOverflowMode overflow, GTextAlignment align, GColor color) {
+  GRect shadow = rect;
+  shadow.origin.x += 1;
+  shadow.origin.y += 1;
+  graphics_context_set_text_color(ctx, GColorWhite);
+  graphics_draw_text(ctx, text, font, shadow, overflow, align, NULL);
+  graphics_context_set_text_color(ctx, color);
+  graphics_draw_text(ctx, text, font, rect, overflow, align, NULL);
+}
+#endif
+
 // ── Dots ───────────────────────────────────────────────────────────────────
 static void draw_dots(GContext *ctx, int x, int y, int n, int filled) {
   for (int i = 0; i < n; i++) {
@@ -290,15 +339,28 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   }
 
   // Score — G1 label if doubleheader
+#ifdef PBL_COLOR
+  draw_team_text(ctx, s_away_abbr, f24,
+    GRect(hpad, by-8, 44, 22), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
+    team_color(s_away_abbr));
+#else
   graphics_context_set_text_color(ctx, GColorWhite);
   graphics_draw_text(ctx, s_away_abbr, f24,
     GRect(hpad, by-8, 44, 22), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+#endif
   char sc[16];
   snprintf(sc, sizeof(sc), "%d - %d", s_away_score, s_home_score);
+  graphics_context_set_text_color(ctx, GColorWhite);
   graphics_draw_text(ctx, sc, f28,
     GRect(w/2 - 28, by-8, 56, 28), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+#ifdef PBL_COLOR
+  draw_team_text(ctx, s_home_abbr, f24,
+    GRect(w - 44 - hpad, by-8, 44, 22), GTextOverflowModeTrailingEllipsis, GTextAlignmentRight,
+    team_color(s_home_abbr));
+#else
   graphics_draw_text(ctx, s_home_abbr, f24,
     GRect(w - 44 - hpad, by-8, 44, 22), GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
+#endif
   if (s_game2_status[0] && strcmp(s_game2_status,"off")!=0) {
     graphics_context_set_text_color(ctx, GColorYellow);
     graphics_draw_text(ctx, "G1", f14,

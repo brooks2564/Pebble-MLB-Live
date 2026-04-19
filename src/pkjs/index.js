@@ -119,14 +119,16 @@ var SPEED_NUM = {"5000":5000, "10000":10000, "30000":30000, "60000":60000};
 var _cs = {};
 try { _cs = JSON.parse(localStorage.getItem("clay-settings")) || {}; } catch(e) {}
 
-var gTeamIdx    = typeof _cs.TEAM_IDX === "number" ? _cs.TEAM_IDX : 13;
+// Clay's HTML select returns string values, so handle both string and number types.
+var _savedIdx   = parseInt(_cs.TEAM_IDX, 10);
+var gTeamIdx    = (!isNaN(_savedIdx) && _savedIdx >= 0 && _savedIdx < TEAMS.length) ? _savedIdx : 13;
 var gVibrate    = _cs.VIBRATE    === undefined ? true : !!_cs.VIBRATE;
 var gBatteryBar = _cs.BATTERY_BAR === undefined ? true : !!_cs.BATTERY_BAR;
-var gTzOffset   = typeof _cs.TZ_OFFSET === "number" ? _cs.TZ_OFFSET : -5;
+var _savedTz    = parseInt(_cs.TZ_OFFSET, 10);
+var gTzOffset   = isNaN(_savedTz) ? -5 : _savedTz;
 // Ticker speed stored/used as a STRING to avoid Pebble JS number truncation bugs.
-// Pebble's + operator and parseInt truncate multi-digit numbers to 3 chars.
-// JSON.stringify is the only safe number→string conversion.
-var _rawSpd      = _cs.TICKER_SPEED !== undefined ? JSON.stringify(_cs.TICKER_SPEED) : null;
+// Use String() — handles both number 5000 and string "5000" without adding JSON quotes.
+var _rawSpd      = _cs.TICKER_SPEED !== undefined ? String(_cs.TICKER_SPEED) : null;
 var gTickerSpeed = validSpeedStr(_rawSpd) ? _rawSpd : "5000"; // STRING, e.g. "10000"
 var gAllGames   = [];
 
@@ -536,15 +538,16 @@ Pebble.addEventListener("webviewclosed", function(e) {
     clay.getSettings(e.response, false);
 
     var cs = JSON.parse(localStorage.getItem("clay-settings")) || {};
-    var idx = typeof cs.TEAM_IDX === "number" ? cs.TEAM_IDX : gTeamIdx;
-    if (idx < 0 || idx >= TEAMS.length) return;
+    var parsedIdx = parseInt(cs.TEAM_IDX, 10);
+    var idx = (!isNaN(parsedIdx) && parsedIdx >= 0 && parsedIdx < TEAMS.length) ? parsedIdx : gTeamIdx;
 
     gTeamIdx    = idx;
     gVibrate    = cs.VIBRATE    === undefined ? true : !!cs.VIBRATE;
     gBatteryBar = cs.BATTERY_BAR === undefined ? true : !!cs.BATTERY_BAR;
-    gTzOffset   = typeof cs.TZ_OFFSET === "number" ? cs.TZ_OFFSET : -5;
-    // Use JSON.stringify for safe number→string (Pebble JS truncates with + or parseInt)
-    var spdStr   = cs.TICKER_SPEED !== undefined ? JSON.stringify(cs.TICKER_SPEED) : null;
+    var parsedTz = parseInt(cs.TZ_OFFSET, 10);
+    gTzOffset   = isNaN(parsedTz) ? -5 : parsedTz;
+    // Use String() for safe number→string (handles both "5000" string and 5000 number)
+    var spdStr   = cs.TICKER_SPEED !== undefined ? String(cs.TICKER_SPEED) : null;
     gTickerSpeed = validSpeedStr(spdStr) ? spdStr : "5000"; // STRING
 
     console.log("[MLB] Settings – team: " + TEAMS[gTeamIdx].abbr +

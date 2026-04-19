@@ -148,6 +148,16 @@ function yesterdayDateStr() {
     (dd < 10 ? "0" + dd : dd);
 }
 
+function tomorrowDateStr() {
+  var d  = new Date();
+  d.setDate(d.getDate() + 1);
+  var mm = d.getMonth() + 1;
+  var dd = d.getDate();
+  return d.getFullYear() + "-" +
+    (mm < 10 ? "0" + mm : mm) + "-" +
+    (dd < 10 ? "0" + dd : dd);
+}
+
 // MLB Stats API returns game times in UTC — convert to phone's local timezone
 function formatStartTime(isoStr) {
   if (!isoStr) return "";
@@ -297,7 +307,8 @@ function fetchGameData(teamIdx) {
   var abbr      = TEAMS[teamIdx].abbr;
   var today     = todayDateStr();
   var yesterday = yesterdayDateStr();
-  var url = SCHEDULE_URL + "?sportId=1&startDate=" + yesterday + "&endDate=" + today + "&hydrate=linescore,team";
+  var tomorrow  = tomorrowDateStr();
+  var url = SCHEDULE_URL + "?sportId=1&startDate=" + yesterday + "&endDate=" + tomorrow + "&hydrate=linescore,team";
   console.log("[MLB] Fetching for " + abbr + " (" + yesterday + " to " + today + ")");
   var xhr = new XMLHttpRequest();
   xhr.open("GET", url, true);
@@ -317,7 +328,7 @@ function fetchGameData(teamIdx) {
         if (dates[d].date === today) { todayGames = dates[d].games || []; break; }
       }
       gAllGames = todayGames;
-      processGames(dates, todayGames, abbr, today, yesterday);
+      processGames(dates, todayGames, abbr, today, yesterday, tomorrow);
     } catch(e) {
       console.log("[MLB] Parse error: " + e);
       sendOffMessage();
@@ -339,8 +350,14 @@ function findTeamGame(gamesList, target, stateFilter) {
   return null;
 }
 
-function processGames(dates, todayGames, abbr, today, yesterday) {
+function processGames(dates, todayGames, abbr, today, yesterday, tomorrow) {
   var target = abbr.toUpperCase();
+
+  // Collect tomorrow's games for next-game lookup
+  var tomorrowGames = [];
+  for (var d = 0; d < dates.length; d++) {
+    if (dates[d].date === tomorrow) { tomorrowGames = dates[d].games || []; break; }
+  }
 
   // Pass 1: LIVE game on any date (midnight crossing)
   var game1 = null;
@@ -348,13 +365,16 @@ function processGames(dates, todayGames, abbr, today, yesterday) {
     game1 = findTeamGame(dates[d].games || [], target, "Live");
   }
 
-  // Pass 2: FINAL from today or yesterday
+  // Pass 2: FINAL — prefer today over yesterday
   if (!game1) {
-    for (var d = 0; d < dates.length && !game1; d++) {
-      var dayDate = dates[d].date || "";
-      if (dayDate !== today && dayDate !== yesterday) continue;
-      game1 = findTeamGame(dates[d].games || [], target, "Final");
+    game1 = findTeamGame(todayGames, target, "Final");
+  }
+  if (!game1) {
+    var yGames = [];
+    for (var d = 0; d < dates.length; d++) {
+      if (dates[d].date === yesterday) { yGames = dates[d].games || []; break; }
     }
+    game1 = findTeamGame(yGames, target, "Final");
   }
 
   // Pass 3: PRE-GAME from today
@@ -414,10 +434,11 @@ function processGames(dates, todayGames, abbr, today, yesterday) {
     }
   }
 
-  // Next game: when showing a final, look for a pre-game today
+  // Next game: when showing a final, look for pre-game today then tomorrow
   var nextGame = "";
   if (status === "final" && !game2) {
-    var nextG = findTeamGame(todayGames, target, "Preview");
+    var nextG = findTeamGame(todayGames, target, "Preview") ||
+                findTeamGame(tomorrowGames, target, "Preview");
     if (nextG) {
       var nextAway = toInternal((nextG.teams.away.team.abbreviation || "").toUpperCase());
       var nextHome = toInternal((nextG.teams.home.team.abbreviation || "").toUpperCase());

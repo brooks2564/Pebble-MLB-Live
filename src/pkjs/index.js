@@ -527,32 +527,48 @@ Pebble.addEventListener("appmessage", function(e) {
 
 // ── Settings (Clay) ────────────────────────────────────────────────────────
 Pebble.addEventListener("showConfiguration", function() {
+  console.log("[MLB] showConfiguration – opening settings");
   Pebble.openURL(clay.generateUrl());
 });
 
 Pebble.addEventListener("webviewclosed", function(e) {
-  if (!e.response) return;
+  console.log("[MLB] webviewclosed response length: " + (e && e.response ? e.response.length : "none"));
+  if (!e || !e.response || e.response === "CANCELLED") return;
+
   try {
-    // getSettings saves to 'clay-settings' in localStorage; convert=false to skip
-    // auto-sending AppMessage (we send manually to include the fetchGameData callback)
-    clay.getSettings(e.response, false);
+    // Manually parse the Clay response — decode URI then JSON-parse.
+    // Clay's webview sends: pebblejs://close#<URL-encoded JSON>
+    // Pebble gives us just the hash portion as e.response.
+    var raw = e.response;
+    // Decode if URL-encoded
+    if (raw.charAt(0) !== '{') {
+      try { raw = decodeURIComponent(raw); } catch(de) {}
+    }
+    var parsed = JSON.parse(raw);
+    console.log("[MLB] parsed settings keys: " + Object.keys(parsed).join(","));
 
-    var cs = JSON.parse(localStorage.getItem("clay-settings")) || {};
-    var parsedIdx = parseInt(cs.TEAM_IDX, 10);
-    var idx = (!isNaN(parsedIdx) && parsedIdx >= 0 && parsedIdx < TEAMS.length) ? parsedIdx : gTeamIdx;
+    // Clay wraps values as {value: X} for some component types; unwrap them.
+    function unwrap(v) {
+      return (v !== null && typeof v === 'object' && 'value' in v) ? v.value : v;
+    }
+    var flat = {};
+    Object.keys(parsed).forEach(function(k) { flat[k] = unwrap(parsed[k]); });
 
-    gTeamIdx    = idx;
-    gVibrate    = cs.VIBRATE    === undefined ? true : !!cs.VIBRATE;
-    gBatteryBar = cs.BATTERY_BAR === undefined ? true : !!cs.BATTERY_BAR;
-    var parsedTz = parseInt(cs.TZ_OFFSET, 10);
+    // Save to clay-settings so generateUrl() can restore them next open
+    localStorage.setItem('clay-settings', JSON.stringify(flat));
+
+    var parsedIdx = parseInt(flat.TEAM_IDX, 10);
+    gTeamIdx    = (!isNaN(parsedIdx) && parsedIdx >= 0 && parsedIdx < TEAMS.length) ? parsedIdx : gTeamIdx;
+    gVibrate    = flat.VIBRATE    === undefined ? true : !!flat.VIBRATE;
+    gBatteryBar = flat.BATTERY_BAR === undefined ? true : !!flat.BATTERY_BAR;
+    var parsedTz = parseInt(flat.TZ_OFFSET, 10);
     gTzOffset   = isNaN(parsedTz) ? -5 : parsedTz;
-    // Use String() for safe number→string (handles both "5000" string and 5000 number)
-    var spdStr   = cs.TICKER_SPEED !== undefined ? String(cs.TICKER_SPEED) : null;
-    gTickerSpeed = validSpeedStr(spdStr) ? spdStr : "5000"; // STRING
+    var spdStr  = flat.TICKER_SPEED !== undefined ? String(flat.TICKER_SPEED) : null;
+    gTickerSpeed = validSpeedStr(spdStr) ? spdStr : "5000";
 
-    console.log("[MLB] Settings – team: " + TEAMS[gTeamIdx].abbr +
-      " vibrate: " + gVibrate + " battery: " + gBatteryBar +
-      " tz: " + gTzOffset + " tickerSpeed: " + gTickerSpeed);
+    console.log("[MLB] Settings applied – team:" + TEAMS[gTeamIdx].abbr +
+      " vib:" + gVibrate + " bat:" + gBatteryBar +
+      " tz:" + gTzOffset + " spd:" + gTickerSpeed);
 
     var settingsMsg = {};
     settingsMsg[KEY_TEAM_IDX]     = gTeamIdx;

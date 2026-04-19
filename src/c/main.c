@@ -337,7 +337,7 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   GFont f14 = fonts_get_system_font(FONT_KEY_GOTHIC_14);
   int score_w=60, abbr_w=36;
   int score_y=by-4, score_h=26;
-  int rec_y=by+12, inn_y=by+26, inn_h=20;
+  int rec_y=by+24, inn_y=by+26, inn_h=20;
   int bat_y=by+46, bat_w=w-70-hpad;
   int spd_y=by+46, lp_y=by+60, lp_w=w-36-hpad;
   int g2_y=by+46;

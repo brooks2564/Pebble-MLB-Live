@@ -6,12 +6,7 @@
     "pebble-app"
   ],
   "private": true,
-  "scripts": {
-    "postinstall": "python3 scripts/patch-clay-flint.py"
-  },
-  "dependencies": {
-    "pebble-clay": "github:brooks2564/pebble-clay-flint"
-  },
+  "dependencies": {},
   "pebble": {
     "displayName": "MLB Live",
     "shortName": "MLB Live",

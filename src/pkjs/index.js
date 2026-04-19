@@ -1,6 +1,4 @@
 // ── MLB Live Watchface  ·  PebbleKit JS ───────────────────────────────────
-var Clay = require('pebble-clay');
-var clayConfig = require('./config.json');
 var SIM_MODE = false;
 function sendSimGame() {
   var msg = {};
@@ -70,8 +68,6 @@ var KEY_TICKER_SPEED = 32;
 // Official MLB Stats API — free, no key required
 var SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule";
 var LIVE_URL     = "https://statsapi.mlb.com/api/v1.1/game";
-var clay = new Clay(clayConfig, null, { autoHandleEvents: false });
-
 // MLB Stats API uses shorter abbreviations for 5 teams — map to our internal 3-letter abbrs
 var MLB_TO_INTERNAL = { "KC":"KCR", "SD":"SDP", "SF":"SFG", "TB":"TBR", "WSH":"WSN" };
 function toInternal(abbr) { return MLB_TO_INTERNAL[abbr] || abbr; }
@@ -117,7 +113,7 @@ function validSpeedStr(s) {
 var SPEED_NUM = {"5000":5000, "10000":10000, "30000":30000, "60000":60000};
 
 var _cs = {};
-try { _cs = JSON.parse(localStorage.getItem("clay-settings")) || {}; } catch(e) {}
+try { _cs = JSON.parse(localStorage.getItem("mlb-settings")) || {}; } catch(e) {}
 
 // Clay's HTML select returns string values, so handle both string and number types.
 var _savedIdx   = parseInt(_cs.TEAM_IDX, 10);
@@ -525,58 +521,51 @@ Pebble.addEventListener("appmessage", function(e) {
   fetchGameData(gTeamIdx);
 });
 
-// ── Settings (Clay) ────────────────────────────────────────────────────────
+// ── Settings (mlb-config.html) ────────────────────────────────────────────
+// Hash format: #teamIdx|vibrate|batteryBar|tzOffset|tickerSpeed
 Pebble.addEventListener("showConfiguration", function() {
-  console.log("[MLB] showConfiguration – opening settings");
-  Pebble.openURL(clay.generateUrl());
+  var url = "https://brooks2564.github.io/Pebble-MLB-Live/mlb-config.html" +
+    "#" + gTeamIdx +
+    "|" + (gVibrate    ? 1 : 0) +
+    "|" + (gBatteryBar ? 1 : 0) +
+    "|" + gTzOffset +
+    "|" + gTickerSpeed;
+  Pebble.openURL(url);
 });
 
 Pebble.addEventListener("webviewclosed", function(e) {
-  console.log("[MLB] webviewclosed response length: " + (e && e.response ? e.response.length : "none"));
   if (!e || !e.response || e.response === "CANCELLED") return;
-
   try {
-    // Manually parse the Clay response — decode URI then JSON-parse.
-    // Clay's webview sends: pebblejs://close#<URL-encoded JSON>
-    // Pebble gives us just the hash portion as e.response.
     var raw = e.response;
-    // Decode if URL-encoded
     if (raw.charAt(0) !== '{') {
       try { raw = decodeURIComponent(raw); } catch(de) {}
     }
-    var parsed = JSON.parse(raw);
-    console.log("[MLB] parsed settings keys: " + Object.keys(parsed).join(","));
+    var s = JSON.parse(raw);
 
-    // Clay wraps values as {value: X} for some component types; unwrap them.
-    function unwrap(v) {
-      return (v !== null && typeof v === 'object' && 'value' in v) ? v.value : v;
-    }
-    var flat = {};
-    Object.keys(parsed).forEach(function(k) { flat[k] = unwrap(parsed[k]); });
+    var parsedIdx = parseInt(s.teamIdx, 10);
+    if (!isNaN(parsedIdx) && parsedIdx >= 0 && parsedIdx < TEAMS.length) gTeamIdx = parsedIdx;
+    gVibrate    = s.vibrate    ? true : false;
+    gBatteryBar = s.batteryBar ? true : false;
+    var parsedTz = parseInt(s.tzOffset, 10);
+    if (!isNaN(parsedTz)) gTzOffset = parsedTz;
+    var spdStr = s.tickerSpeed !== undefined ? String(s.tickerSpeed) : null;
+    if (validSpeedStr(spdStr)) gTickerSpeed = spdStr;
 
-    // Save to clay-settings so generateUrl() can restore them next open
-    localStorage.setItem('clay-settings', JSON.stringify(flat));
+    localStorage.setItem("mlb-settings", JSON.stringify({
+      TEAM_IDX:     gTeamIdx,
+      VIBRATE:      gVibrate,
+      BATTERY_BAR:  gBatteryBar,
+      TZ_OFFSET:    gTzOffset,
+      TICKER_SPEED: gTickerSpeed
+    }));
 
-    var parsedIdx = parseInt(flat.TEAM_IDX, 10);
-    gTeamIdx    = (!isNaN(parsedIdx) && parsedIdx >= 0 && parsedIdx < TEAMS.length) ? parsedIdx : gTeamIdx;
-    gVibrate    = flat.VIBRATE    === undefined ? true : !!flat.VIBRATE;
-    gBatteryBar = flat.BATTERY_BAR === undefined ? true : !!flat.BATTERY_BAR;
-    var parsedTz = parseInt(flat.TZ_OFFSET, 10);
-    gTzOffset   = isNaN(parsedTz) ? -5 : parsedTz;
-    var spdStr  = flat.TICKER_SPEED !== undefined ? String(flat.TICKER_SPEED) : null;
-    gTickerSpeed = validSpeedStr(spdStr) ? spdStr : "5000";
-
-    console.log("[MLB] Settings applied – team:" + TEAMS[gTeamIdx].abbr +
-      " vib:" + gVibrate + " bat:" + gBatteryBar +
-      " tz:" + gTzOffset + " spd:" + gTickerSpeed);
-
-    var settingsMsg = {};
-    settingsMsg[KEY_TEAM_IDX]     = gTeamIdx;
-    settingsMsg[KEY_VIBRATE]      = gVibrate    ? 1 : 0;
-    settingsMsg[KEY_BATTERY_BAR]  = gBatteryBar ? 1 : 0;
-    settingsMsg[KEY_TZ_OFFSET]    = gTzOffset;
-    settingsMsg[KEY_TICKER_SPEED] = SPEED_NUM[gTickerSpeed] || 5000;
-    Pebble.sendAppMessage(settingsMsg,
+    var msg = {};
+    msg[KEY_TEAM_IDX]     = gTeamIdx;
+    msg[KEY_VIBRATE]      = gVibrate    ? 1 : 0;
+    msg[KEY_BATTERY_BAR]  = gBatteryBar ? 1 : 0;
+    msg[KEY_TZ_OFFSET]    = gTzOffset;
+    msg[KEY_TICKER_SPEED] = SPEED_NUM[gTickerSpeed] || 5000;
+    Pebble.sendAppMessage(msg,
       function() { fetchGameData(gTeamIdx); },
       function() { fetchGameData(gTeamIdx); }
     );

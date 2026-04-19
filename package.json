@@ -10,7 +10,7 @@
     "postinstall": "python3 scripts/patch-clay-flint.py"
   },
   "dependencies": {
-    "pebble-clay": "^1.0.4"
+    "pebble-clay": "file:vendor/pebble-clay"
   },
   "pebble": {
     "displayName": "MLB Live",

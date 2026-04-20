@@ -1,4 +1,8 @@
 // ── MLB Live Watchface  ·  PebbleKit JS ───────────────────────────────────
+var Clay = require('pebble-clay');
+var clayConfig = require('./config.json');
+var clay = new Clay(clayConfig, null, { autoHandleEvents: false });
+
 var SIM_MODE = false;
 function sendSimGame() {
   var msg = {};
@@ -552,34 +556,23 @@ Pebble.addEventListener("appmessage", function(e) {
   fetchGameData(gTeamIdx);
 });
 
-// ── Settings (mlb-config.html) ────────────────────────────────────────────
-// Hash format: #teamIdx|vibrate|batteryBar|tzOffset|tickerSpeed
+// ── Settings (Clay) ────────────────────────────────────────────────────────
 Pebble.addEventListener("showConfiguration", function() {
-  var url = "https://brooks2564.github.io/Pebble-MLB-Live/mlb-config.html" +
-    "#" + gTeamIdx +
-    "|" + (gVibrate    ? 1 : 0) +
-    "|" + (gBatteryBar ? 1 : 0) +
-    "|" + gTzOffset +
-    "|" + gTickerSpeed;
-  Pebble.openURL(url);
+  Pebble.openURL(clay.generateUrl());
 });
 
 Pebble.addEventListener("webviewclosed", function(e) {
   if (!e || !e.response || e.response === "CANCELLED") return;
   try {
-    var raw = e.response;
-    if (raw.charAt(0) !== '{') {
-      try { raw = decodeURIComponent(raw); } catch(de) {}
-    }
-    var s = JSON.parse(raw);
+    var s = clay.getSettings(e.response, false);
 
-    var parsedIdx = parseInt(s.teamIdx, 10);
+    var parsedIdx = parseInt(s.TEAM_IDX, 10);
     if (!isNaN(parsedIdx) && parsedIdx >= 0 && parsedIdx < TEAMS.length) gTeamIdx = parsedIdx;
-    gVibrate    = s.vibrate    ? true : false;
-    gBatteryBar = s.batteryBar ? true : false;
-    var parsedTz = parseInt(s.tzOffset, 10);
+    gVibrate    = s.VIBRATE     ? true : false;
+    gBatteryBar = s.BATTERY_BAR ? true : false;
+    var parsedTz = parseInt(s.TZ_OFFSET, 10);
     if (!isNaN(parsedTz)) gTzOffset = parsedTz;
-    var spdStr = s.tickerSpeed !== undefined ? String(s.tickerSpeed) : null;
+    var spdStr = s.TICKER_SPEED !== undefined ? String(s.TICKER_SPEED) : null;
     if (validSpeedStr(spdStr)) gTickerSpeed = spdStr;
 
     localStorage.setItem("mlb-settings", JSON.stringify({

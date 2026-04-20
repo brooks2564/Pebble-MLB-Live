@@ -171,6 +171,15 @@ function formatStartTime(isoStr) {
   } catch(e) { return ""; }
 }
 
+function formatDayOfWeek(isoStr) {
+  if (!isoStr) return "";
+  try {
+    var d = new Date(isoStr);
+    if (isNaN(d.getTime())) return "";
+    return ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
+  } catch(e) { return ""; }
+}
+
 // Map play description to short readable result (max ~12 chars)
 function describePlay(desc) {
   if (!desc) return "";
@@ -444,7 +453,8 @@ function processGames(dates, todayGames, abbr, today, yesterday, tomorrow) {
       var nextHome = toInternal((nextG.teams.home.team.abbreviation || "").toUpperCase());
       var opp      = (nextAway === target) ? nextHome : nextAway;
       var t        = formatStartTime(nextG.gameDate || "");
-      nextGame     = opp + (t ? " " + t : "");
+      var day      = formatDayOfWeek(nextG.gameDate || "");
+      nextGame     = opp + (day ? " " + day : "") + (t ? " " + t : "");
       if (nextGame.length > 19) nextGame = nextGame.substring(0, 19);
     }
   }

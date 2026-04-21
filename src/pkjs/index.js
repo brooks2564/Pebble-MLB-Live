@@ -1,7 +1,7 @@
 // ── MLB Live Watchface  ·  PebbleKit JS ───────────────────────────────────
 var Clay = require('pebble-clay');
 var clayConfig = require('./config.json');
-var clay = new Clay(clayConfig, null, { autoHandleEvents: false });
+var clay = new Clay(clayConfig);   // autoHandleEvents: true — Clay persists & sends AppMessage
 
 var SIM_MODE = false;
 function sendSimGame() {
@@ -116,21 +116,27 @@ function validSpeedStr(s) {
 }
 var SPEED_NUM = {"5000":5000, "10000":10000, "30000":30000, "60000":60000};
 
-var _cs = {};
-try { _cs = JSON.parse(localStorage.getItem("mlb-settings")) || {}; } catch(e) {}
+var gTeamIdx     = 13;
+var gVibrate     = true;
+var gBatteryBar  = true;
+var gTzOffset    = -5;
+var gTickerSpeed = "5000";   // STRING to avoid Pebble JS number truncation bugs
+var gAllGames    = [];
 
-// Clay's HTML select returns string values, so handle both string and number types.
-var _savedIdx   = parseInt(_cs.TEAM_IDX, 10);
-var gTeamIdx    = (!isNaN(_savedIdx) && _savedIdx >= 0 && _savedIdx < TEAMS.length) ? _savedIdx : 13;
-var gVibrate    = _cs.VIBRATE    === undefined ? true : !!_cs.VIBRATE;
-var gBatteryBar = _cs.BATTERY_BAR === undefined ? true : !!_cs.BATTERY_BAR;
-var _savedTz    = parseInt(_cs.TZ_OFFSET, 10);
-var gTzOffset   = isNaN(_savedTz) ? -5 : _savedTz;
-// Ticker speed stored/used as a STRING to avoid Pebble JS number truncation bugs.
-// Use String() — handles both number 5000 and string "5000" without adding JSON quotes.
-var _rawSpd      = _cs.TICKER_SPEED !== undefined ? String(_cs.TICKER_SPEED) : null;
-var gTickerSpeed = validSpeedStr(_rawSpd) ? _rawSpd : "5000"; // STRING, e.g. "10000"
-var gAllGames   = [];
+function loadFromClay() {
+  var cs = {};
+  try { cs = JSON.parse(localStorage.getItem("clay-settings")) || {}; } catch(e) {}
+
+  var pIdx = parseInt(cs.TEAM_IDX, 10);
+  if (!isNaN(pIdx) && pIdx >= 0 && pIdx < TEAMS.length) gTeamIdx = pIdx;
+  if (cs.VIBRATE     !== undefined) gVibrate    = !!cs.VIBRATE;
+  if (cs.BATTERY_BAR !== undefined) gBatteryBar = !!cs.BATTERY_BAR;
+  var pTz = parseInt(cs.TZ_OFFSET, 10);
+  if (!isNaN(pTz)) gTzOffset = pTz;
+  var spd = cs.TICKER_SPEED !== undefined ? String(cs.TICKER_SPEED) : null;
+  if (validSpeedStr(spd)) gTickerSpeed = spd;
+}
+loadFromClay();
 
 // ── Utility ───────────────────────────────────────────────────────────────
 function todayDateStr() {
@@ -557,42 +563,14 @@ Pebble.addEventListener("appmessage", function(e) {
 });
 
 // ── Settings (Clay) ────────────────────────────────────────────────────────
-Pebble.addEventListener("showConfiguration", function() {
-  Pebble.openURL(clay.generateUrl());
-});
-
+// Clay handles showConfiguration + webviewclosed automatically (saves to localStorage,
+// sends AppMessage to watch). We listen afterward to refresh our pkjs globals and
+// trigger an immediate data refetch with the new team.
 Pebble.addEventListener("webviewclosed", function(e) {
   if (!e || !e.response || e.response === "CANCELLED") return;
   try {
-    var s = clay.getSettings(e.response, false);
-
-    var parsedIdx = parseInt(s.TEAM_IDX, 10);
-    if (!isNaN(parsedIdx) && parsedIdx >= 0 && parsedIdx < TEAMS.length) gTeamIdx = parsedIdx;
-    gVibrate    = s.VIBRATE     ? true : false;
-    gBatteryBar = s.BATTERY_BAR ? true : false;
-    var parsedTz = parseInt(s.TZ_OFFSET, 10);
-    if (!isNaN(parsedTz)) gTzOffset = parsedTz;
-    var spdStr = s.TICKER_SPEED !== undefined ? String(s.TICKER_SPEED) : null;
-    if (validSpeedStr(spdStr)) gTickerSpeed = spdStr;
-
-    localStorage.setItem("mlb-settings", JSON.stringify({
-      TEAM_IDX:     gTeamIdx,
-      VIBRATE:      gVibrate,
-      BATTERY_BAR:  gBatteryBar,
-      TZ_OFFSET:    gTzOffset,
-      TICKER_SPEED: gTickerSpeed
-    }));
-
-    var msg = {};
-    msg[KEY_TEAM_IDX]     = gTeamIdx;
-    msg[KEY_VIBRATE]      = gVibrate    ? 1 : 0;
-    msg[KEY_BATTERY_BAR]  = gBatteryBar ? 1 : 0;
-    msg[KEY_TZ_OFFSET]    = gTzOffset;
-    msg[KEY_TICKER_SPEED] = SPEED_NUM[gTickerSpeed] || 5000;
-    Pebble.sendAppMessage(msg,
-      function() { fetchGameData(gTeamIdx); },
-      function() { fetchGameData(gTeamIdx); }
-    );
+    loadFromClay();
+    fetchGameData(gTeamIdx);
   } catch(ex) {
     console.log("[MLB] webviewclosed error: " + ex);
   }

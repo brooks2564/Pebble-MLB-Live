@@ -112,5 +112,9 @@
         ]
       }
     ]
+  },
+  {
+    "type": "submit",
+    "defaultValue": "Save Settings"
   }
 ]

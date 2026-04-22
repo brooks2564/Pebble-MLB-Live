@@ -286,10 +286,16 @@ function extractLivePBP(liveData) {
   var linescore = ld.linescore || {};
   var offense   = linescore.offense || {};
 
-  // Batter last name
+  // Batter last name (handle suffixes like Jr., Sr., II, III, IV)
   if (offense.batter && offense.batter.fullName) {
     var np = offense.batter.fullName.split(" ");
-    result.batter = np[np.length - 1].substring(0, 13);
+    var suffixes = ["Jr.", "Sr.", "II", "III", "IV", "V"];
+    var last = np[np.length - 1];
+    if (np.length >= 3 && suffixes.indexOf(last) !== -1) {
+      result.batter = (np[np.length - 2] + " " + last).substring(0, 13);
+    } else {
+      result.batter = last.substring(0, 13);
+    }
   }
 
   // Base runners

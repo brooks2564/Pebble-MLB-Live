@@ -10,14 +10,22 @@ A live MLB scoreboard watchface for Pebble smartwatches. Scores, innings, pitch 
 - Away and home team abbreviations with win/loss records
 - Live score updated every minute
 - Inning and half-inning (Top / Bot)
-- Pre-game start time and weather conditions
-- Final score with next scheduled game
+
+**Pre-game** (shown 2 hours before first pitch):
+- Start time and weather conditions (temperature + sky)
+- Probable starting pitchers for both teams with current season W-L record
+- TV network carrying the game (national broadcast prioritized, falls back to your team's local)
+
+**Final game:**
+- Winning and losing pitcher (e.g. `W: Cole  L: Burnes`)
+- Save pitcher if applicable (e.g. `SV: Clase`)
+- Next scheduled game
 
 **Live game detail:**
 - ⚾ **Base runner diamond** — lights up which bases are occupied
 - 🔢 **Balls / Strikes / Outs** — dot indicators updated in real time
 - 🧢 **Current batter** — last name of the batter at the plate
-- 💨 **Pitch speed and type** — e.g. `FB 97` or `SL 88`
+- 💨 **Pitch speed and type** — e.g. `Fastball 97` or `Slider 88`
 - 📋 **Last play result** — e.g. `Single`, `Strikeout`, `Home Run`
 
 **Ticker strip:**
@@ -60,7 +68,7 @@ Runs on all 7 Pebble platforms — every watch ever made:
 
 ## 📡 Data Source
 
-Live scores and play-by-play data are pulled from [SportsData.io](https://sportsdata.io). Standings are refreshed daily. Game data refreshes every minute while the watchface is active.
+All data comes from the official [MLB Stats API](https://statsapi.mlb.com) — free, no API key required. Game data refreshes every minute while the watchface is active.
 
 ---
 

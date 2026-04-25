@@ -273,6 +273,16 @@ function fetchPitcherRecord(personId, callback) {
   xhr.send();
 }
 
+// True if game starts between now and 2 hours from now
+function isWithinTwoHours(isoStr) {
+  if (!isoStr) return false;
+  try {
+    var gameMs = new Date(isoStr).getTime();
+    var nowMs  = Date.now();
+    return gameMs > nowMs && (gameMs - nowMs) <= 2 * 60 * 60 * 1000;
+  } catch(e) { return false; }
+}
+
 // Pick best TV network: national first, then user's team's local
 function getTV(broadcasts, isUserHome) {
   if (!broadcasts || !broadcasts.length) return "";
@@ -452,6 +462,12 @@ function processGames(dates, todayGames, abbr, today, yesterday, tomorrow) {
   var game1 = null;
   for (var d = 0; d < dates.length && !game1; d++) {
     game1 = findTeamGame(dates[d].games || [], target, "Live");
+  }
+
+  // Pass 1b: PRE-GAME starting within 2 hours — beats yesterday's final
+  if (!game1) {
+    var preGame = findTeamGame(todayGames, target, "Preview");
+    if (preGame && isWithinTwoHours(preGame.gameDate)) game1 = preGame;
   }
 
   // Pass 2: FINAL — prefer today over yesterday

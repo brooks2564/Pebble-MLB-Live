@@ -61,7 +61,13 @@
       "GAME2_STATUS": 29,
       "GAME2_SCORE": 30,
       "TZ_OFFSET": 31,
-      "TICKER_SPEED": 32
+      "TICKER_SPEED": 32,
+      "AWAY_PITCHER": 33,
+      "HOME_PITCHER": 34,
+      "WIN_PITCHER": 35,
+      "LOSS_PITCHER": 36,
+      "SAVE_PITCHER": 37,
+      "TV_NETWORK": 38
     },
     "resources": {
       "media": [

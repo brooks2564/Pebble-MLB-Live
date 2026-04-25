@@ -33,6 +33,12 @@
 #define KEY_GAME2_SCORE  30
 #define KEY_TZ_OFFSET    31
 #define KEY_TICKER_SPEED 32
+#define KEY_AWAY_PITCHER 33
+#define KEY_HOME_PITCHER 34
+#define KEY_WIN_PITCHER  35
+#define KEY_LOSS_PITCHER 36
+#define KEY_SAVE_PITCHER 37
+#define KEY_TV_NETWORK   38
 
 #define NUM_TEAMS    30
 #define PERSIST_TEAM 1
@@ -109,6 +115,12 @@ static int  s_team_idx       = 2;
 static int  s_prev_score     = -1;
 static bool s_i_am_away;
 static int  s_ticker_speed   = 5000;  // ms between ticker advances (default 5s)
+static char s_away_pitcher[16] = "";
+static char s_home_pitcher[16] = "";
+static char s_win_pitcher[16]  = "";
+static char s_loss_pitcher[16] = "";
+static char s_save_pitcher[16] = "";
+static char s_tv_network[24]   = "";
 
 static void request_game_data(void);
 
@@ -330,6 +342,8 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   int bso_sl=by+115, bso_sd=by+123;
   int bso_ol=by+130, bso_od=by+138;
   int dot_r=4, dot_sp=13;
+  int pre_pitch_y=by+82, pre_tv_y=by+98;
+  int fin_dec_y=by+82, fin_save_y=by+98, fin_next_y=by+114;
 #else
   GFont f28 = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
   GFont f24 = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
@@ -345,6 +359,8 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   int bso_sl=by+89, bso_sd=by+96;
   int bso_ol=by+103, bso_od=by+110;
   int dot_r=3, dot_sp=10;
+  int pre_pitch_y=by+58, pre_tv_y=by+72;
+  int fin_dec_y=by+58, fin_save_y=by+72, fin_next_y=by+86;
 #endif
   GFont fsm = fonts_get_system_font(FONT_KEY_GOTHIC_14);
 
@@ -443,19 +459,57 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   graphics_draw_text(ctx, inn, f18,
     GRect(0, inn_y, w, inn_h), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
 
-  // Game 2 score if doubleheader, else next game
+  // Game 2 score if doubleheader
   if (s_game2_status[0] && strcmp(s_game2_status,"off")!=0 && s_game2_score[0]) {
     graphics_context_set_text_color(ctx, GColorLightGray);
     graphics_draw_text(ctx, "G2:", fsm,
       GRect(hpad, g2_y, 24, 14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
     graphics_draw_text(ctx, s_game2_score, f14,
       GRect(hpad+26, g2_y, w-hpad-28, 18), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-  } else if (strcmp(s_status,"final")==0 && s_next_game[0]) {
+  }
+
+  // Pre-game: probable starters (left/right) + TV network
+  if (strcmp(s_status,"pre")==0) {
+    int pw = w/2 - hpad - 2;
     graphics_context_set_text_color(ctx, GColorLightGray);
-    graphics_draw_text(ctx, "Next:", f14,
-      GRect(hpad, g2_y, 42, 18), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-    graphics_draw_text(ctx, s_next_game, f14,
-      GRect(hpad+44, g2_y, w-hpad-46, 18), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+    if (s_away_pitcher[0])
+      graphics_draw_text(ctx, s_away_pitcher, f14,
+        GRect(hpad, pre_pitch_y, pw, 18), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+    if (s_home_pitcher[0])
+      graphics_draw_text(ctx, s_home_pitcher, f14,
+        GRect(w/2+2, pre_pitch_y, pw, 18), GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
+    if (s_tv_network[0]) {
+      char tv[28];
+      snprintf(tv, sizeof(tv), "TV: %s", s_tv_network);
+      graphics_context_set_text_color(ctx, GColorDarkGray);
+      graphics_draw_text(ctx, tv, f14,
+        GRect(0, pre_tv_y, w, 18), GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+    }
+  }
+
+  // Final: W/L/SV decisions + next game
+  if (strcmp(s_status,"final")==0) {
+    graphics_context_set_text_color(ctx, GColorLightGray);
+    if (s_win_pitcher[0] || s_loss_pitcher[0]) {
+      char dec[36]; dec[0] = 0;
+      if (s_win_pitcher[0] && s_loss_pitcher[0])
+        snprintf(dec, sizeof(dec), "%s  %s", s_win_pitcher, s_loss_pitcher);
+      else if (s_win_pitcher[0])
+        snprintf(dec, sizeof(dec), "%s", s_win_pitcher);
+      else
+        snprintf(dec, sizeof(dec), "%s", s_loss_pitcher);
+      graphics_draw_text(ctx, dec, f14,
+        GRect(hpad, fin_dec_y, w-hpad*2, 18), GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+    }
+    if (s_save_pitcher[0])
+      graphics_draw_text(ctx, s_save_pitcher, f14,
+        GRect(0, fin_save_y, w, 18), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+    if (s_next_game[0] && (!s_game2_status[0] || strcmp(s_game2_status,"off")==0)) {
+      graphics_draw_text(ctx, "Next:", f14,
+        GRect(hpad, fin_next_y, 42, 18), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+      graphics_draw_text(ctx, s_next_game, f14,
+        GRect(hpad+44, fin_next_y, w-hpad-46, 18), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+    }
   }
 
   if (strcmp(s_status,"live")!=0) return;
@@ -600,6 +654,18 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
     s_ticker_raw[199]=0;
     ticker_parse_and_start();
   }
+  t = dict_find(iter,KEY_AWAY_PITCHER);
+  if(t){strncpy(s_away_pitcher,t->value->cstring,15);s_away_pitcher[15]=0;}
+  t = dict_find(iter,KEY_HOME_PITCHER);
+  if(t){strncpy(s_home_pitcher,t->value->cstring,15);s_home_pitcher[15]=0;}
+  t = dict_find(iter,KEY_WIN_PITCHER);
+  if(t){strncpy(s_win_pitcher,t->value->cstring,15);s_win_pitcher[15]=0;}
+  t = dict_find(iter,KEY_LOSS_PITCHER);
+  if(t){strncpy(s_loss_pitcher,t->value->cstring,15);s_loss_pitcher[15]=0;}
+  t = dict_find(iter,KEY_SAVE_PITCHER);
+  if(t){strncpy(s_save_pitcher,t->value->cstring,15);s_save_pitcher[15]=0;}
+  t = dict_find(iter,KEY_TV_NETWORK);
+  if(t){strncpy(s_tv_network,t->value->cstring,23);s_tv_network[23]=0;}
   t = dict_find(iter,KEY_TICKER_SPEED);
   if(t){
     int spd=(int)t->value->int32;
@@ -636,6 +702,8 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
       s_on_first=s_on_second=s_on_third=false;
       s_next_game[0]=s_weather[0]=s_pitch_type[0]=0;
       s_game2_status[0]=s_game2_score[0]=0;
+      s_away_pitcher[0]=s_home_pitcher[0]=0;
+      s_win_pitcher[0]=s_loss_pitcher[0]=s_save_pitcher[0]=s_tv_network[0]=0;
       s_prev_score=-1;
       strncpy(s_status,"off",7);
       request_game_data();

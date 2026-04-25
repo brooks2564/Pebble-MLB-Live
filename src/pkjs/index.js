@@ -33,7 +33,14 @@ function sendSimGame() {
   msg[KEY_WEATHER]      = "";
   msg[KEY_GAME2_STATUS] = "";
   msg[KEY_GAME2_SCORE]  = "";
-  sendMessage(msg);
+  var simExtra = {};
+  simExtra[KEY_AWAY_PITCHER] = "";
+  simExtra[KEY_HOME_PITCHER] = "";
+  simExtra[KEY_WIN_PITCHER]  = "";
+  simExtra[KEY_LOSS_PITCHER] = "";
+  simExtra[KEY_SAVE_PITCHER] = "";
+  simExtra[KEY_TV_NETWORK]   = "ESPN";
+  sendMessage(msg, simExtra);
 }
 // Keys must match #define KEY_* in main.c exactly
 var KEY_AWAY_ABBR    = 1;
@@ -68,6 +75,12 @@ var KEY_GAME2_STATUS = 29;
 var KEY_GAME2_SCORE  = 30;
 var KEY_TZ_OFFSET    = 31;
 var KEY_TICKER_SPEED = 32;
+var KEY_AWAY_PITCHER = 33;
+var KEY_HOME_PITCHER = 34;
+var KEY_WIN_PITCHER  = 35;
+var KEY_LOSS_PITCHER = 36;
+var KEY_SAVE_PITCHER = 37;
+var KEY_TV_NETWORK   = 38;
 
 // Official MLB Stats API — free, no key required
 var SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule";
@@ -227,6 +240,57 @@ var PITCH_CODE_MAP = {
 };
 function pitchCodeToAbbr(code) { return PITCH_CODE_MAP[code] || ""; }
 
+// Get last name, handling Jr./Sr./II/III suffixes
+function getLastName(fullName) {
+  if (!fullName) return "";
+  var parts = fullName.split(" ");
+  var suffixes = ["Jr.", "Sr.", "II", "III", "IV", "V"];
+  var last = parts[parts.length - 1];
+  if (parts.length >= 3 && suffixes.indexOf(last) !== -1)
+    return (parts[parts.length - 2] + " " + last).substring(0, 12);
+  return last.substring(0, 12);
+}
+
+// Fetch pitcher season W-L record from MLB Stats API
+function fetchPitcherRecord(personId, callback) {
+  var year = new Date().getFullYear();
+  var url = "https://statsapi.mlb.com/api/v1/people/" + personId +
+            "/stats?stats=season&season=" + year + "&group=pitching";
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", url, true);
+  xhr.setRequestHeader("Accept", "application/json");
+  xhr.onload = function() {
+    if (xhr.status !== 200) { callback(null); return; }
+    try {
+      var data   = JSON.parse(xhr.responseText);
+      var splits = (data.stats && data.stats[0] && data.stats[0].splits) || [];
+      if (splits.length > 0) {
+        callback({ wins: splits[0].stat.wins || 0, losses: splits[0].stat.losses || 0 });
+      } else { callback(null); }
+    } catch(e) { callback(null); }
+  };
+  xhr.onerror = function() { callback(null); };
+  xhr.send();
+}
+
+// Pick best TV network: national first, then user's team's local
+function getTV(broadcasts, isUserHome) {
+  if (!broadcasts || !broadcasts.length) return "";
+  var national = ["FOX", "ESPN", "TBS", "FS1", "ESPN2", "MLB Network", "Peacock", "Apple TV+"];
+  for (var i = 0; i < broadcasts.length; i++) {
+    var bn = broadcasts[i].name || "";
+    for (var j = 0; j < national.length; j++) {
+      if (bn.indexOf(national[j]) !== -1) return bn.substring(0, 20);
+    }
+  }
+  var side = isUserHome ? "home" : "away";
+  for (var i = 0; i < broadcasts.length; i++) {
+    if ((broadcasts[i].homeAway || "").toLowerCase() === side)
+      return (broadcasts[i].name || "").substring(0, 20);
+  }
+  return broadcasts[0] ? (broadcasts[0].name || "").substring(0, 20) : "";
+}
+
 // ── Ticker builder ─────────────────────────────────────────────────────────
 function buildTicker(games, myAbbr) {
   var parts = [];
@@ -333,7 +397,7 @@ function fetchGameData(teamIdx) {
   var today     = todayDateStr();
   var yesterday = yesterdayDateStr();
   var tomorrow  = tomorrowDateStr();
-  var url = SCHEDULE_URL + "?sportId=1&startDate=" + yesterday + "&endDate=" + tomorrow + "&hydrate=linescore,team";
+  var url = SCHEDULE_URL + "?sportId=1&startDate=" + yesterday + "&endDate=" + tomorrow + "&hydrate=linescore,team,probables,weather,broadcasts(all),decisions";
   console.log("[MLB] Fetching for " + abbr + " (" + yesterday + " to " + today + ")");
   var xhr = new XMLHttpRequest();
   xhr.open("GET", url, true);
@@ -501,10 +565,26 @@ function processGames(dates, todayGames, abbr, today, yesterday, tomorrow) {
   msg[KEY_NEXT_GAME]    = nextGame;
   msg[KEY_BATTERY_BAR]  = gBatteryBar ? 1 : 0;
   msg[KEY_TICKER]       = buildTicker(todayGames, target);
-  msg[KEY_WEATHER]      = "";
+  // Weather from schedule API
+  var gWeather = game1.weather || {};
+  var weatherStr = "";
+  if (gWeather.temp) weatherStr = gWeather.temp + "\xB0";
+  if (gWeather.condition && gWeather.condition !== "Unknown")
+    weatherStr += (weatherStr ? " " : "") + gWeather.condition;
+  msg[KEY_WEATHER]      = weatherStr;
   msg[KEY_PITCH_TYPE]   = "";
   msg[KEY_GAME2_STATUS] = g2status;
   msg[KEY_GAME2_SCORE]  = g2score;
+
+  // Extra message: pitchers, decisions, TV (sent separately to stay under 512 bytes)
+  var isUserHome = (homeAbbr === target);
+  var extraMsg = {};
+  extraMsg[KEY_TV_NETWORK]   = getTV(game1.broadcasts || [], isUserHome);
+  extraMsg[KEY_AWAY_PITCHER] = "";
+  extraMsg[KEY_HOME_PITCHER] = "";
+  extraMsg[KEY_WIN_PITCHER]  = "";
+  extraMsg[KEY_LOSS_PITCHER] = "";
+  extraMsg[KEY_SAVE_PITCHER] = "";
 
   if (status === "live" && game1.gamePk) {
     fetchLiveGame(game1.gamePk, function(liveData) {
@@ -516,12 +596,43 @@ function processGames(dates, todayGames, abbr, today, yesterday, tomorrow) {
       msg[KEY_ON_SECOND]   = pbp.onSecond;
       msg[KEY_ON_THIRD]    = pbp.onThird;
       msg[KEY_PITCH_TYPE]  = pbp.pitchType;
-      sendMessage(msg);
+      sendMessage(msg, extraMsg);
     });
     return;
   }
 
-  sendMessage(msg);
+  // Final: pitcher decisions from schedule hydration
+  if (status === "final") {
+    var d = game1.decisions || {};
+    if (d.winner && d.winner.fullName) extraMsg[KEY_WIN_PITCHER]  = "W: "  + getLastName(d.winner.fullName);
+    if (d.loser  && d.loser.fullName)  extraMsg[KEY_LOSS_PITCHER] = "L: "  + getLastName(d.loser.fullName);
+    if (d.save   && d.save.fullName)   extraMsg[KEY_SAVE_PITCHER] = "SV: " + getLastName(d.save.fullName);
+    sendMessage(msg, extraMsg);
+    return;
+  }
+
+  // Pre-game: probable starters + season W-L records (async)
+  if (status === "pre") {
+    var awayProb = game1.teams.away.probablePitcher || {};
+    var homeProb = game1.teams.home.probablePitcher || {};
+    var awayName = getLastName(awayProb.fullName || "");
+    var homeName = getLastName(homeProb.fullName || "");
+    var awayId   = awayProb.id;
+    var homeId   = homeProb.id;
+    var pending = 0, awayRec = null, homeRec = null;
+
+    function onPitchersDone() {
+      if (awayName) extraMsg[KEY_AWAY_PITCHER] = awayName + (awayRec ? " " + awayRec.wins + "-" + awayRec.losses : "");
+      if (homeName) extraMsg[KEY_HOME_PITCHER] = homeName + (homeRec ? " " + homeRec.wins + "-" + homeRec.losses : "");
+      sendMessage(msg, extraMsg);
+    }
+    if (awayId) { pending++; fetchPitcherRecord(awayId, function(r) { awayRec = r; if (--pending === 0) onPitchersDone(); }); }
+    if (homeId) { pending++; fetchPitcherRecord(homeId, function(r) { homeRec = r; if (--pending === 0) onPitchersDone(); }); }
+    if (pending === 0) onPitchersDone();
+    return;
+  }
+
+  sendMessage(msg, extraMsg);
 }
 
 function sendOffMessage() {
@@ -530,9 +641,17 @@ function sendOffMessage() {
   sendMessage(msg);
 }
 
-function sendMessage(dict) {
+function sendExtraMsg(extraMsg) {
+  Pebble.sendAppMessage(extraMsg,
+    function()  { console.log("[MLB] Extra sent OK"); },
+    function(e) { console.log("[MLB] Extra NACK: " + JSON.stringify(e)); }
+  );
+}
+
+function sendMessage(dict, extraMsg) {
   // Send TICKER in a separate message to avoid 512-byte inbox overflow.
   // A full game message + long ticker string can exceed the buffer.
+  // Extra msg (pitchers, TV) goes in a third message for the same reason.
   var ticker = dict[KEY_TICKER];
   delete dict[KEY_TICKER];
 
@@ -543,9 +662,14 @@ function sendMessage(dict) {
         var tm = {};
         tm[KEY_TICKER] = ticker;
         Pebble.sendAppMessage(tm,
-          function()  { console.log("[MLB] Ticker sent OK"); },
+          function() {
+            console.log("[MLB] Ticker sent OK");
+            if (extraMsg) sendExtraMsg(extraMsg);
+          },
           function(e) { console.log("[MLB] Ticker NACK: " + JSON.stringify(e)); }
         );
+      } else if (extraMsg) {
+        sendExtraMsg(extraMsg);
       }
     },
     function(e) { console.log("[MLB] NACK: " + JSON.stringify(e)); }

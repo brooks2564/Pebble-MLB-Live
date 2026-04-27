@@ -539,9 +539,9 @@ function processGames(dates, todayGames, abbr, today, yesterday, tomorrow) {
     }
   }
 
-  // Next game: when showing a final, look for pre-game today then tomorrow
+  // Next game: when final (and doubleheader game2, if any, is also done)
   var nextGame = "";
-  if (status === "final" && !game2) {
+  if (status === "final" && (!game2 || g2status === "final")) {
     var nextG = findTeamGame(todayGames, target, "Preview") ||
                 findTeamGame(tomorrowGames, target, "Preview");
     if (nextG) {

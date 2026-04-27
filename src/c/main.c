@@ -504,7 +504,7 @@ static void canvas_update(Layer *layer, GContext *ctx) {
     if (s_save_pitcher[0])
       graphics_draw_text(ctx, s_save_pitcher, f14,
         GRect(0, fin_save_y, w, 18), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-    if (s_next_game[0] && (!s_game2_status[0] || strcmp(s_game2_status,"off")==0)) {
+    if (s_next_game[0]) {
       graphics_draw_text(ctx, "Next:", f14,
         GRect(hpad, fin_next_y, 42, 18), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
       graphics_draw_text(ctx, s_next_game, f14,

@@ -181,6 +181,16 @@ function tomorrowDateStr() {
     (dd < 10 ? "0" + dd : dd);
 }
 
+function daysFromNowStr(n) {
+  var d  = new Date();
+  d.setDate(d.getDate() + n);
+  var mm = d.getMonth() + 1;
+  var dd = d.getDate();
+  return d.getFullYear() + "-" +
+    (mm < 10 ? "0" + mm : mm) + "-" +
+    (dd < 10 ? "0" + dd : dd);
+}
+
 // MLB Stats API returns game times in UTC — convert to phone's local timezone
 function formatStartTime(isoStr) {
   if (!isoStr) return "";
@@ -407,7 +417,7 @@ function fetchGameData(teamIdx) {
   var today     = todayDateStr();
   var yesterday = yesterdayDateStr();
   var tomorrow  = tomorrowDateStr();
-  var url = SCHEDULE_URL + "?sportId=1&startDate=" + yesterday + "&endDate=" + tomorrow + "&hydrate=linescore,team,probables,weather,broadcasts(all),decisions";
+  var url = SCHEDULE_URL + "?sportId=1&startDate=" + yesterday + "&endDate=" + daysFromNowStr(4) + "&hydrate=linescore,team,probables,weather,broadcasts(all),decisions";
   console.log("[MLB] Fetching for " + abbr + " (" + yesterday + " to " + today + ")");
   var xhr = new XMLHttpRequest();
   xhr.open("GET", url, true);
@@ -539,11 +549,14 @@ function processGames(dates, todayGames, abbr, today, yesterday, tomorrow) {
     }
   }
 
-  // Next game: when final (and doubleheader game2, if any, is also done)
+  // Next game: scan forward through all fetched dates to handle off-days
   var nextGame = "";
   if (status === "final" && (!game2 || g2status === "final")) {
-    var nextG = findTeamGame(todayGames, target, "Preview") ||
-                findTeamGame(tomorrowGames, target, "Preview");
+    var nextG = null;
+    for (var d = 0; d < dates.length && !nextG; d++) {
+      if ((dates[d].date || "") <= today) continue;
+      nextG = findTeamGame(dates[d].games || [], target, "Preview");
+    }
     if (nextG) {
       var nextAway = toInternal((nextG.teams.away.team.abbreviation || "").toUpperCase());
       var nextHome = toInternal((nextG.teams.home.team.abbreviation || "").toUpperCase());

@@ -31,8 +31,8 @@ function sendSimGame() {
   msg[KEY_NEXT_GAME]    = "";
   msg[KEY_BATTERY_BAR]  = 1;
   msg[KEY_WEATHER]      = "";
-  msg[KEY_GAME2_STATUS] = "pre";
-  msg[KEY_GAME2_SCORE]  = "7:05 PM";
+  msg[KEY_GAME2_STATUS] = "live";
+  msg[KEY_GAME2_SCORE]  = "G2  G1: 3-2 F";
   var simExtra = {};
   simExtra[KEY_AWAY_PITCHER] = "";
   simExtra[KEY_HOME_PITCHER] = "";
@@ -512,40 +512,41 @@ function processGames(dates, todayGames, abbr, today, yesterday, tomorrow) {
   var ls       = game1.linescore || {};
   var offense  = ls.offense || {};
 
-  // Game 2 (doubleheader) — only look in same-date games as game1
+  // Doubleheader: find all team games on same date, show the OTHER game's info
   var game1Date = (game1.officialDate || game1.gameDate || "").substring(0, 10);
   var sameDateGames = [];
   for (var d = 0; d < dates.length; d++) {
     if ((dates[d].date || "") === game1Date) { sameDateGames = dates[d].games || []; break; }
   }
-  var game2 = null;
-  var foundFirst = false;
+  var allTeamGames = [];
   for (var i = 0; i < sameDateGames.length; i++) {
-    var g     = sameDateGames[i];
+    var g = sameDateGames[i];
     var awayA = toInternal((g.teams.away.team.abbreviation || "").toUpperCase());
     var homeA = toInternal((g.teams.home.team.abbreviation || "").toUpperCase());
-    if (awayA !== target && homeA !== target) continue;
-    if (!foundFirst) { foundFirst = true; continue; }
-    game2 = g; break;
+    if (awayA === target || homeA === target) allTeamGames.push(g);
   }
 
   var g2status = "", g2score = "";
-  if (game2) {
-    var s2   = (game2.status && game2.status.abstractGameState) || "";
+  if (allTeamGames.length >= 2) {
+    var dhGame1 = allTeamGames[0];
+    var dhGame2 = allTeamGames[1];
+    var watchingGame2 = (game1.gamePk === dhGame2.gamePk);
+    var otherGame  = watchingGame2 ? dhGame1 : dhGame2;
+    var myLabel    = watchingGame2 ? "G2" : "G1";
+    var otherLabel = watchingGame2 ? "G1" : "G2";
+    var s2 = (otherGame.status && otherGame.status.abstractGameState) || "";
     g2status = s2 === "Live"    ? "live"
              : s2 === "Final"   ? "final"
              : s2 === "Preview" ? "pre" : "off";
     if (g2status === "pre") {
-      g2score = formatStartTime(game2.gameDate || "");
+      g2score = myLabel + "  " + otherLabel + ": " + formatStartTime(otherGame.gameDate || "");
     } else if (g2status !== "off") {
-      var ls2 = game2.linescore || {};
-      g2score = awayAbbr + " " + (game2.teams.away.score || 0) + " - " +
-                homeAbbr + " " + (game2.teams.home.score || 0);
-      if (g2status === "live") {
-        g2score += " " + (ls2.isTopInning ? "Top" : "Bot") + " " + (ls2.currentInning || "");
-      } else {
-        g2score += " F";
-      }
+      var ls2 = otherGame.linescore || {};
+      var sc2 = (otherGame.teams.away.score || 0) + "-" + (otherGame.teams.home.score || 0);
+      sc2 += g2status === "live"
+           ? " " + (ls2.isTopInning ? "T" : "B") + (ls2.currentInning || "")
+           : " F";
+      g2score = myLabel + "  " + otherLabel + ": " + sc2;
     }
   }
 

@@ -421,16 +421,11 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   graphics_draw_text(ctx, s_home_abbr, f24,
     GRect(w - abbr_w - hpad, score_y, abbr_w, score_h), GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
 #endif
-  if (s_game2_status[0] && strcmp(s_game2_status,"off")!=0) {
+  if (s_game2_score[0]) {
     int mid_x = hpad + abbr_w;
     int mid_w = w - 2*(hpad + abbr_w);
-    char dh_str[30];
-    if (s_game2_score[0])
-      snprintf(dh_str, sizeof(dh_str), "G1  G2: %s", s_game2_score);
-    else
-      snprintf(dh_str, sizeof(dh_str), "G1");
     graphics_context_set_text_color(ctx, GColorLightGray);
-    graphics_draw_text(ctx, dh_str, f14,
+    graphics_draw_text(ctx, s_game2_score, f14,
       GRect(mid_x, score_y + score_h, mid_w, 18),
       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
   }

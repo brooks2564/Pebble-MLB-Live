@@ -31,8 +31,8 @@ function sendSimGame() {
   msg[KEY_NEXT_GAME]    = "";
   msg[KEY_BATTERY_BAR]  = 1;
   msg[KEY_WEATHER]      = "";
-  msg[KEY_GAME2_STATUS] = "";
-  msg[KEY_GAME2_SCORE]  = "";
+  msg[KEY_GAME2_STATUS] = "pre";
+  msg[KEY_GAME2_SCORE]  = "7:05 PM";
   var simExtra = {};
   simExtra[KEY_AWAY_PITCHER] = "";
   simExtra[KEY_HOME_PITCHER] = "";

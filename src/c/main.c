@@ -334,16 +334,15 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   GFont f14 = fonts_get_system_font(FONT_KEY_GOTHIC_18);
   int score_w=110, abbr_w=44;
   int score_y=by-8, score_h=32;
-  int rec_y=by+16, inn_y=by+50, inn_h=26;
-  int g2_y=by+34;
-  int bat_y=by+76, bat_w=w-80-hpad;
-  int spd_y=by+76, lp_y=by+94, lp_w=w-28-hpad;
-  int bso_bl=by+112, bso_bd=by+120;
-  int bso_sl=by+127, bso_sd=by+135;
-  int bso_ol=by+142, bso_od=by+150;
+  int rec_y=by+16, inn_y=by+36, inn_h=26;
+  int bat_y=by+64, bat_w=w-80-hpad;
+  int spd_y=by+64, lp_y=by+82, lp_w=w-28-hpad;
+  int bso_bl=by+100, bso_bd=by+108;
+  int bso_sl=by+115, bso_sd=by+123;
+  int bso_ol=by+130, bso_od=by+138;
   int dot_r=4, dot_sp=13;
-  int pre_pitch_y=by+94, pre_tv_y=by+112;
-  int fin_dec_y=by+94, fin_save_y=by+108, fin_next_y=by+124;
+  int pre_pitch_y=by+82, pre_tv_y=by+98;
+  int fin_dec_y=by+82, fin_save_y=by+98, fin_next_y=by+114;
 #else
   GFont f28 = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
   GFont f24 = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
@@ -354,7 +353,6 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   int rec_y=by+24, inn_y=by+26, inn_h=20;
   int bat_y=by+46, bat_w=w-70-hpad;
   int spd_y=by+46, lp_y=by+60, lp_w=w-36-hpad;
-  int g2_y=by+46;
   int bso_bl=by+75, bso_bd=by+82;
   int bso_sl=by+89, bso_sd=by+96;
   int bso_ol=by+103, bso_od=by+110;
@@ -424,14 +422,17 @@ static void canvas_update(Layer *layer, GContext *ctx) {
     GRect(w - abbr_w - hpad, score_y, abbr_w, score_h), GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
 #endif
   if (s_game2_status[0] && strcmp(s_game2_status,"off")!=0) {
-    graphics_context_set_text_color(ctx, GColorYellow);
-#ifdef PBL_PLATFORM_EMERY
-    graphics_draw_text(ctx, "G1", fsm,
-      GRect(hpad, g2_y, 20, 14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-#else
-    graphics_draw_text(ctx, "G1", fsm,
-      GRect(w/2 - 10, rec_y, 20, 14), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-#endif
+    int mid_x = hpad + abbr_w;
+    int mid_w = w - 2*(hpad + abbr_w);
+    char dh_str[30];
+    if (s_game2_score[0])
+      snprintf(dh_str, sizeof(dh_str), "G1  G2: %s", s_game2_score);
+    else
+      snprintf(dh_str, sizeof(dh_str), "G1");
+    graphics_context_set_text_color(ctx, GColorLightGray);
+    graphics_draw_text(ctx, dh_str, f14,
+      GRect(mid_x, score_y + score_h, mid_w, 18),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
   }
 
   // Records
@@ -463,22 +464,6 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   graphics_context_set_text_color(ctx, GColorYellow);
   graphics_draw_text(ctx, inn, f18,
     GRect(0, inn_y, w, inn_h), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-
-  // Game 2 score if doubleheader — drawn on same row as G1 label
-  if (s_game2_status[0] && strcmp(s_game2_status,"off")!=0 && s_game2_score[0]) {
-    graphics_context_set_text_color(ctx, GColorLightGray);
-#ifdef PBL_PLATFORM_EMERY
-    graphics_draw_text(ctx, "G2:", fsm,
-      GRect(hpad+22, g2_y, 26, 14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-    graphics_draw_text(ctx, s_game2_score, f14,
-      GRect(hpad+50, g2_y, w-hpad-52, 18), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-#else
-    graphics_draw_text(ctx, "G2:", fsm,
-      GRect(hpad, g2_y, 24, 14), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-    graphics_draw_text(ctx, s_game2_score, f14,
-      GRect(hpad+26, g2_y, w-hpad-28, 18), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-#endif
-  }
 
   // Pre-game: probable starters (left/right) + TV network
   if (strcmp(s_status,"pre")==0) {

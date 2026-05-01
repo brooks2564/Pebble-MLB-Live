@@ -351,13 +351,6 @@ static void tap_handler(AccelAxisType axis, int32_t direction) {
   toggle_ticker_view();
 }
 
-static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  toggle_ticker_view();
-}
-
-static void click_config_provider(void *context) {
-  window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
-}
 
 // ── Team colors ────────────────────────────────────────────────────────────
 #ifdef PBL_PLATFORM_EMERY
@@ -917,8 +910,6 @@ static void window_load(Window *window) {
   Layer *root=window_get_root_layer(window);
   GRect bounds=layer_get_bounds(root);
   int w=bounds.size.w;
-
-  window_set_click_config_provider(window, click_config_provider);
 
   s_canvas=layer_create(bounds);
   layer_set_update_proc(s_canvas,canvas_update);

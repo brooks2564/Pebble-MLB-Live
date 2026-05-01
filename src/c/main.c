@@ -526,20 +526,20 @@ static void canvas_update(Layer *layer, GContext *ctx) {
     int fl_dec_y = fl_st_y + inn_h + 4;
     int fl_ret_y = fl_dec_y + 16;
     graphics_context_set_text_color(ctx, GColorLightGray);
-    graphics_draw_text(ctx, fl_away_rec, fsm,
-      GRect(hpad, fl_rec_y, 42, 14),
+    graphics_draw_text(ctx, fl_away_rec, f14,
+      GRect(hpad, fl_rec_y, 42, 18),
       GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-    graphics_draw_text(ctx, fl_home_rec, fsm,
-      GRect(w-42-hpad, fl_rec_y, 42, 14),
+    graphics_draw_text(ctx, fl_home_rec, f14,
+      GRect(w-42-hpad, fl_rec_y, 42, 18),
       GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
     graphics_context_set_text_color(ctx, GColorYellow);
     if (tg_st[0]) graphics_draw_text(ctx, tg_st, f18,
       GRect(0, fl_st_y, w, inn_h),
       GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
     if (fl_dec[0]) {
-      graphics_context_set_text_color(ctx, GColorWhite);
-      graphics_draw_text(ctx, fl_dec, fsm,
-        GRect(hpad, fl_dec_y, w-2*hpad, 14),
+      graphics_context_set_text_color(ctx, GColorLightGray);
+      graphics_draw_text(ctx, fl_dec, f14,
+        GRect(hpad, fl_dec_y, w-2*hpad, 18),
         GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
     }
     graphics_context_set_text_color(ctx, GColorDarkGray);

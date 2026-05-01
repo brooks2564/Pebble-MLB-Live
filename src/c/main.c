@@ -351,12 +351,12 @@ static void tap_handler(AccelAxisType axis, int32_t direction) {
   toggle_ticker_view();
 }
 
-static void back_click_handler(ClickRecognizerRef recognizer, void *context) {
+static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
   toggle_ticker_view();
 }
 
 static void click_config_provider(void *context) {
-  window_single_click_subscribe(BUTTON_ID_BACK, back_click_handler);
+  window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
 }
 
 // ── Team colors ────────────────────────────────────────────────────────────

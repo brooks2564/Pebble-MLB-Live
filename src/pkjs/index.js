@@ -39,7 +39,8 @@ function sendSimGame() {
   simExtra[KEY_WIN_PITCHER]  = "";
   simExtra[KEY_LOSS_PITCHER] = "";
   simExtra[KEY_SAVE_PITCHER] = "";
-  simExtra[KEY_TV_NETWORK]   = "ESPN";
+  simExtra[KEY_TV_NETWORK]    = "ESPN";
+  simExtra[KEY_TICKER_DETAIL] = "12-6|11-7|W:Verlande|L:Burnes;34-28|31-31";
   sendMessage(msg, simExtra);
 }
 // Keys must match #define KEY_* in main.c exactly
@@ -81,6 +82,7 @@ var KEY_WIN_PITCHER  = 35;
 var KEY_LOSS_PITCHER = 36;
 var KEY_SAVE_PITCHER = 37;
 var KEY_TV_NETWORK   = 38;
+var KEY_TICKER_DETAIL = 39;
 
 // Official MLB Stats API — free, no key required
 var SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule";
@@ -344,6 +346,33 @@ function buildTicker(games, myAbbr) {
     parts.push(entry);
   }
   return parts.join("|");
+}
+
+// ── Ticker detail builder (records + decisions for flick view) ─────────────
+function buildTickerDetail(games, myAbbr) {
+  var parts = [];
+  for (var i = 0; i < games.length; i++) {
+    var g    = games[i];
+    var away = toInternal((g.teams.away.team.abbreviation || "").toUpperCase());
+    var home = toInternal((g.teams.home.team.abbreviation || "").toUpperCase());
+    if (away === myAbbr || home === myAbbr) continue;
+    var state  = (g.status && g.status.abstractGameState) || "";
+    var status = state === "Live" ? "live" : state === "Final" ? "final"
+               : state === "Preview" ? "pre" : null;
+    if (!status) continue;
+    var awayRec = g.teams.away.leagueRecord || {};
+    var homeRec = g.teams.home.leagueRecord || {};
+    var detail = (awayRec.wins || 0) + "-" + (awayRec.losses || 0) + "|" +
+                 (homeRec.wins || 0) + "-" + (homeRec.losses || 0);
+    if (status === "final") {
+      var d = g.decisions || {};
+      if (d.winner && d.winner.fullName) detail += "|W:" + getLastName(d.winner.fullName).substring(0, 8);
+      if (d.loser  && d.loser.fullName)  detail += "|L:" + getLastName(d.loser.fullName).substring(0, 8);
+      if (d.save   && d.save.fullName)   detail += "|SV:" + getLastName(d.save.fullName).substring(0, 7);
+    }
+    parts.push(detail);
+  }
+  return parts.join(";");
 }
 
 // ── Live game fetch ────────────────────────────────────────────────────────
@@ -622,12 +651,13 @@ function processGames(dates, todayGames, abbr, today, yesterday, tomorrow) {
   // Extra message: pitchers, decisions, TV (sent separately to stay under 512 bytes)
   var isUserHome = (homeAbbr === target);
   var extraMsg = {};
-  extraMsg[KEY_TV_NETWORK]   = getTV(game1.broadcasts || [], isUserHome);
-  extraMsg[KEY_AWAY_PITCHER] = "";
-  extraMsg[KEY_HOME_PITCHER] = "";
-  extraMsg[KEY_WIN_PITCHER]  = "";
-  extraMsg[KEY_LOSS_PITCHER] = "";
-  extraMsg[KEY_SAVE_PITCHER] = "";
+  extraMsg[KEY_TV_NETWORK]    = getTV(game1.broadcasts || [], isUserHome);
+  extraMsg[KEY_AWAY_PITCHER]  = "";
+  extraMsg[KEY_HOME_PITCHER]  = "";
+  extraMsg[KEY_WIN_PITCHER]   = "";
+  extraMsg[KEY_LOSS_PITCHER]  = "";
+  extraMsg[KEY_SAVE_PITCHER]  = "";
+  extraMsg[KEY_TICKER_DETAIL] = buildTickerDetail(todayGames, target);
 
   if (status === "live" && game1.gamePk) {
     fetchLiveGame(game1.gamePk, function(liveData) {

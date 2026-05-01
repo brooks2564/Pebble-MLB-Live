@@ -67,7 +67,8 @@
       "WIN_PITCHER": 35,
       "LOSS_PITCHER": 36,
       "SAVE_PITCHER": 37,
-      "TV_NETWORK": 38
+      "TV_NETWORK": 38,
+      "TICKER_DETAIL": 39
     },
     "resources": {
       "media": [

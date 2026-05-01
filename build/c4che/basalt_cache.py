@@ -28,14 +28,15 @@ LD = 'arm-none-eabi-ld'
 LIBDIR = '/usr/local/lib64'
 LIBPATH_ST = '-L%s'
 LIB_DIR = 'node_modules'
-LIB_JSON = []
+LIB_JSON = [{'name': 'pebble-clay', 'version': '1.0.4-flint', 'description': 'Pebble Config Framework', 'scripts': {}, 'files': ['dist.zip', 'index.js', 'LICENSE'], 'repository': {'type': 'git', 'url': 'git+https://github.com/pebble/clay.git'}, 'keywords': ['pebble', 'config', 'configuration', 'pebble-package'], 'author': 'Pebble Technology', 'license': 'MIT', 'bugs': {'url': 'https://github.com/pebble/clay/issues'}, 'pebble': {'projectType': 'package', 'sdkVersion': '3', 'targetPlatforms': ['aplite', 'basalt', 'chalk', 'diorite', 'emery', 'flint'], 'resources': {'media': []}, 'capabilities': ['configurable']}, 'homepage': 'https://github.com/pebble/clay#readme', 'devDependencies': {}, 'dependencies': {}, 'path': 'node_modules/pebble-clay/dist', 'js_paths': ['node_modules/pebble-clay/dist/js/index.js']}]
+LIB_RESOURCES_JSON = {'pebble-clay': []}
 LIB_ST = '-l%s'
 LINKFLAGS = ['-mcpu=cortex-m3', '-mthumb', '-Wl,--gc-sections', '-Wl,--warn-common', '-fPIE', '-Os']
 LINKFLAGS_MACBUNDLE = ['-bundle', '-undefined', 'dynamic_lookup']
 LINKFLAGS_cshlib = ['-shared']
 LINKFLAGS_cstlib = ['-Wl,-Bstatic']
 LINK_CC = ['arm-none-eabi-gcc']
-MESSAGE_KEYS = {'AWAY_ABBR': 1, 'HOME_ABBR': 2, 'AWAY_SCORE': 3, 'HOME_SCORE': 4, 'INNING': 5, 'INNING_HALF': 6, 'BALLS': 7, 'STRIKES': 8, 'OUTS': 9, 'STATUS': 10, 'TEAM_IDX': 11, 'START_TIME': 12, 'AWAY_WINS': 13, 'AWAY_LOSSES': 14, 'HOME_WINS': 15, 'HOME_LOSSES': 16, 'VIBRATE': 17, 'BATTER': 18, 'PITCH_SPEED': 19, 'LAST_PLAY': 20, 'ON_FIRST': 21, 'ON_SECOND': 22, 'ON_THIRD': 23, 'NEXT_GAME': 24, 'BATTERY_BAR': 25, 'TICKER': 26, 'WEATHER': 27, 'PITCH_TYPE': 28, 'GAME2_STATUS': 29, 'GAME2_SCORE': 30, 'TZ_OFFSET': 31, 'TICKER_SPEED': 32}
+MESSAGE_KEYS = {'AWAY_ABBR': 1, 'HOME_ABBR': 2, 'AWAY_SCORE': 3, 'HOME_SCORE': 4, 'INNING': 5, 'INNING_HALF': 6, 'BALLS': 7, 'STRIKES': 8, 'OUTS': 9, 'STATUS': 10, 'TEAM_IDX': 11, 'START_TIME': 12, 'AWAY_WINS': 13, 'AWAY_LOSSES': 14, 'HOME_WINS': 15, 'HOME_LOSSES': 16, 'VIBRATE': 17, 'BATTER': 18, 'PITCH_SPEED': 19, 'LAST_PLAY': 20, 'ON_FIRST': 21, 'ON_SECOND': 22, 'ON_THIRD': 23, 'NEXT_GAME': 24, 'BATTERY_BAR': 25, 'TICKER': 26, 'WEATHER': 27, 'PITCH_TYPE': 28, 'GAME2_STATUS': 29, 'GAME2_SCORE': 30, 'TZ_OFFSET': 31, 'TICKER_SPEED': 32, 'AWAY_PITCHER': 33, 'HOME_PITCHER': 34, 'WIN_PITCHER': 35, 'LOSS_PITCHER': 36, 'SAVE_PITCHER': 37, 'TV_NETWORK': 38, 'TICKER_DETAIL': 39}
 MESSAGE_KEYS_DEFINITION = '/home/brooks2564/Pebble-MLB-Live/build/src/message_keys.auto.c'
 MESSAGE_KEYS_HEADER = '/home/brooks2564/Pebble-MLB-Live/build/include/message_keys.auto.h'
 MESSAGE_KEYS_JSON = '/home/brooks2564/Pebble-MLB-Live/build/js/message_keys.json'

@@ -39,6 +39,7 @@
 #define KEY_LOSS_PITCHER 36
 #define KEY_SAVE_PITCHER 37
 #define KEY_TV_NETWORK   38
+#define KEY_TICKER_DETAIL 39
 
 #define NUM_TEAMS    30
 #define PERSIST_TEAM 1
@@ -71,8 +72,9 @@ static AppTimer  *s_ticker_timer;
 static bool       s_anim_running = false;
 
 // Ticker state — all static, no dynamic allocation
-#define MAX_GAMES 8
-#define GAME_LEN  22
+#define MAX_GAMES  8
+#define GAME_LEN   22
+#define DETAIL_LEN 46
 static char s_ticker_raw[200];
 static char s_games[MAX_GAMES][GAME_LEN];
 static int  s_game_count;
@@ -121,6 +123,8 @@ static char s_win_pitcher[16]  = "";
 static char s_loss_pitcher[16] = "";
 static char s_save_pitcher[16] = "";
 static char s_tv_network[24]   = "";
+static char s_detail_raw[380]  = "";
+static char s_game_details[MAX_GAMES][DETAIL_LEN];
 static bool  s_viewing_ticker     = false;
 static char  s_ticker_team_str[GAME_LEN] = "";
 
@@ -173,6 +177,46 @@ static void parse_ticker_game(const char *src,
       else strncpy(status_str,tok[5],9);
       status_str[9]='\0';
     }
+  }
+}
+
+static void detail_parse(void) {
+  memset(s_game_details, 0, sizeof(s_game_details));
+  char buf[380];
+  strncpy(buf, s_detail_raw, 379); buf[379] = '\0';
+  int gi = 0;
+  char *p = buf;
+  while (*p && gi < MAX_GAMES) {
+    char *semi = strchr(p, ';');
+    if (semi) *semi = '\0';
+    strncpy(s_game_details[gi], p, DETAIL_LEN - 1);
+    s_game_details[gi][DETAIL_LEN - 1] = '\0';
+    gi++;
+    if (!semi) break;
+    p = semi + 1;
+  }
+}
+
+static void parse_detail(const char *detail,
+                          char *away_rec, char *home_rec, char *decisions) {
+  away_rec[0] = home_rec[0] = decisions[0] = '\0';
+  if (!detail || !detail[0]) return;
+  char buf[DETAIL_LEN];
+  strncpy(buf, detail, DETAIL_LEN - 1); buf[DETAIL_LEN - 1] = '\0';
+  char *p = buf;
+  int fi = 0;
+  while (*p && fi < 8) {
+    char *pipe = strchr(p, '|');
+    if (pipe) *pipe = '\0';
+    if      (fi == 0) { strncpy(away_rec,  p, 8); away_rec[8]  = '\0'; }
+    else if (fi == 1) { strncpy(home_rec,  p, 8); home_rec[8]  = '\0'; }
+    else {
+      if (decisions[0]) strncat(decisions, " ", 31 - strlen(decisions));
+      strncat(decisions, p, 31 - strlen(decisions));
+    }
+    fi++;
+    if (!pipe) break;
+    p = pipe + 1;
   }
 }
 
@@ -455,6 +499,8 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   if (s_viewing_ticker && s_game_count > 0) {
     char tg_away[5]="", tg_home[5]="", tg_score[12]="", tg_st[10]="";
     parse_ticker_game(s_games[s_game_idx], tg_away, tg_home, tg_score, tg_st);
+    char fl_away_rec[9]="", fl_home_rec[9]="", fl_dec[32]="";
+    parse_detail(s_game_details[s_game_idx], fl_away_rec, fl_home_rec, fl_dec);
 #ifdef PBL_PLATFORM_EMERY
     if (tg_away[0]) draw_team_text(ctx, tg_away, f24,
       GRect(hpad, score_y, abbr_w, score_h),
@@ -475,13 +521,30 @@ static void canvas_update(Layer *layer, GContext *ctx) {
     if (tg_score[0]) graphics_draw_text(ctx, tg_score, f28,
       GRect(w/2-score_w/2, score_y, score_w, score_h),
       GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+    int fl_rec_y = score_y + score_h;
+    int fl_st_y  = fl_rec_y + 16;
+    int fl_dec_y = fl_st_y + inn_h + 4;
+    int fl_ret_y = fl_dec_y + 16;
+    graphics_context_set_text_color(ctx, GColorLightGray);
+    graphics_draw_text(ctx, fl_away_rec, fsm,
+      GRect(hpad, fl_rec_y, 42, 14),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+    graphics_draw_text(ctx, fl_home_rec, fsm,
+      GRect(w-42-hpad, fl_rec_y, 42, 14),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
     graphics_context_set_text_color(ctx, GColorYellow);
     if (tg_st[0]) graphics_draw_text(ctx, tg_st, f18,
-      GRect(0, inn_y, w, inn_h),
+      GRect(0, fl_st_y, w, inn_h),
       GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+    if (fl_dec[0]) {
+      graphics_context_set_text_color(ctx, GColorWhite);
+      graphics_draw_text(ctx, fl_dec, fsm,
+        GRect(hpad, fl_dec_y, w-2*hpad, 14),
+        GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+    }
     graphics_context_set_text_color(ctx, GColorDarkGray);
     graphics_draw_text(ctx, "flick to return", fsm,
-      GRect(0, bat_y, w, 18),
+      GRect(0, fl_ret_y, w, 14),
       GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
     return;
   }
@@ -766,6 +829,8 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
   if(t){strncpy(s_save_pitcher,t->value->cstring,15);s_save_pitcher[15]=0;}
   t = dict_find(iter,KEY_TV_NETWORK);
   if(t){strncpy(s_tv_network,t->value->cstring,23);s_tv_network[23]=0;}
+  t = dict_find(iter,KEY_TICKER_DETAIL);
+  if(t){strncpy(s_detail_raw,t->value->cstring,379);s_detail_raw[379]=0;detail_parse();}
   t = dict_find(iter,KEY_TICKER_SPEED);
   if(t){
     int spd=(int)t->value->int32;
@@ -809,6 +874,8 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
       s_game2_status[0]=s_game2_score[0]=0;
       s_away_pitcher[0]=s_home_pitcher[0]=0;
       s_win_pitcher[0]=s_loss_pitcher[0]=s_save_pitcher[0]=s_tv_network[0]=0;
+      s_detail_raw[0]=0;
+      memset(s_game_details,0,sizeof(s_game_details));
       s_prev_score=-1;
       strncpy(s_status,"off",7);
       request_game_data();

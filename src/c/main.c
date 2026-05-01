@@ -121,8 +121,60 @@ static char s_win_pitcher[16]  = "";
 static char s_loss_pitcher[16] = "";
 static char s_save_pitcher[16] = "";
 static char s_tv_network[24]   = "";
+static bool  s_viewing_ticker     = false;
+static char  s_ticker_team_str[GAME_LEN] = "";
 
 static void request_game_data(void);
+
+// ── Wrist-flick helpers ────────────────────────────────────────────────────
+static void build_team_game_str(char *buf, int len) {
+  if (strcmp(s_status,"live")==0 && s_inning>0)
+    snprintf(buf,len,"%s %d - %s %d %s%d",
+      s_away_abbr,s_away_score,s_home_abbr,s_home_score,
+      s_inning_half?"B":"T",s_inning);
+  else if (strcmp(s_status,"pre")==0)
+    snprintf(buf,len,"%s vs %s %s",s_away_abbr,s_home_abbr,
+             s_start_time[0]?s_start_time:"Pre");
+  else if (strcmp(s_status,"final")==0)
+    snprintf(buf,len,"%s %d - %s %d F",
+      s_away_abbr,s_away_score,s_home_abbr,s_home_score);
+  else strncpy(buf,"No Game",len);
+  buf[len-1]='\0';
+}
+
+static void parse_ticker_game(const char *src,
+                               char *away, char *home,
+                               char *score, char *status_str) {
+  away[0]=home[0]=score[0]=status_str[0]='\0';
+  char buf[GAME_LEN];
+  strncpy(buf,src,GAME_LEN-1); buf[GAME_LEN-1]='\0';
+  char *tok[7]; int n=0; char *p=buf;
+  while (*p && n<7) {
+    while (*p==' ') p++;
+    if (!*p) break;
+    tok[n++]=p;
+    while (*p && *p!=' ') p++;
+    if (*p) { *p='\0'; p++; }
+  }
+  if (n<1) return;
+  strncpy(away,tok[0],4); away[4]='\0';
+  if (n>=2 && strcmp(tok[1],"vs")==0) {
+    if (n>=3) { strncpy(home,tok[2],4); home[4]='\0'; }
+    strncpy(score,"vs",3);
+    if (n>=4) {
+      if (n>=5) snprintf(status_str,10,"%s %s",tok[3],tok[4]);
+      else      snprintf(status_str,10,"%s",tok[3]);
+    }
+  } else if (n>=5) {
+    strncpy(home,tok[3],4); home[4]='\0';
+    snprintf(score,12,"%s - %s",tok[1],tok[4]);
+    if (n>=6) {
+      if (strcmp(tok[5],"F")==0) strncpy(status_str,"Final",9);
+      else strncpy(status_str,tok[5],9);
+      status_str[9]='\0';
+    }
+  }
+}
 
 // ── Ticker ─────────────────────────────────────────────────────────────────
 static void ticker_update_text(void) {
@@ -224,10 +276,31 @@ static void ticker_parse_and_start(void) {
 
   // Show first game and start timer
   s_anim_running = false;
-  ticker_update_text();
-  if (s_game_count > 1) {
-    s_ticker_timer = app_timer_register((uint32_t)s_ticker_speed, ticker_advance, NULL);
+  if (s_viewing_ticker) {
+    build_team_game_str(s_ticker_team_str, GAME_LEN);
+    if (s_ticker_cur) text_layer_set_text(s_ticker_cur, s_ticker_team_str);
+  } else {
+    ticker_update_text();
+    if (s_game_count > 1)
+      s_ticker_timer = app_timer_register((uint32_t)s_ticker_speed, ticker_advance, NULL);
   }
+}
+
+// ── Wrist flick ────────────────────────────────────────────────────────────
+static void tap_handler(AccelAxisType axis, int32_t direction) {
+  if (s_game_count == 0) return;
+  if (!s_viewing_ticker) {
+    s_viewing_ticker = true;
+    build_team_game_str(s_ticker_team_str, GAME_LEN);
+    if (s_ticker_cur) text_layer_set_text(s_ticker_cur, s_ticker_team_str);
+    if (s_ticker_timer) { app_timer_cancel(s_ticker_timer); s_ticker_timer=NULL; }
+  } else {
+    s_viewing_ticker = false;
+    ticker_update_text();
+    if (s_game_count>1 && !s_ticker_timer)
+      s_ticker_timer=app_timer_register((uint32_t)s_ticker_speed,ticker_advance,NULL);
+  }
+  layer_mark_dirty(s_canvas);
 }
 
 // ── Team colors ────────────────────────────────────────────────────────────
@@ -377,6 +450,41 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   graphics_draw_text(ctx, s_date_buf, fonts_get_system_font(FONT_KEY_GOTHIC_18),
     GRect(56, 2, w - 56 - hpad, 20), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
 #endif
+
+  // ── Wrist-flick: show current ticker game ─────────────────────────────────
+  if (s_viewing_ticker && s_game_count > 0) {
+    char tg_away[5]="", tg_home[5]="", tg_score[12]="", tg_st[10]="";
+    parse_ticker_game(s_games[s_game_idx], tg_away, tg_home, tg_score, tg_st);
+#ifdef PBL_PLATFORM_EMERY
+    if (tg_away[0]) draw_team_text(ctx, tg_away, f24,
+      GRect(hpad, score_y, abbr_w, score_h),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, team_color(tg_away));
+    if (tg_home[0]) draw_team_text(ctx, tg_home, f24,
+      GRect(w-abbr_w-hpad, score_y, abbr_w, score_h),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, team_color(tg_home));
+#else
+    graphics_context_set_text_color(ctx, GColorWhite);
+    if (tg_away[0]) graphics_draw_text(ctx, tg_away, f24,
+      GRect(hpad, score_y, abbr_w, score_h),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+    if (tg_home[0]) graphics_draw_text(ctx, tg_home, f24,
+      GRect(w-abbr_w-hpad, score_y, abbr_w, score_h),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
+#endif
+    graphics_context_set_text_color(ctx, GColorWhite);
+    if (tg_score[0]) graphics_draw_text(ctx, tg_score, f28,
+      GRect(w/2-score_w/2, score_y, score_w, score_h),
+      GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+    graphics_context_set_text_color(ctx, GColorYellow);
+    if (tg_st[0]) graphics_draw_text(ctx, tg_st, f18,
+      GRect(0, inn_y, w, inn_h),
+      GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+    graphics_context_set_text_color(ctx, GColorDarkGray);
+    graphics_draw_text(ctx, "flick to return", fsm,
+      GRect(0, bat_y, w, 18),
+      GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+    return;
+  }
 
   // No game
   if (strcmp(s_status, "off") == 0) {
@@ -679,6 +787,11 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
     s_prev_score=my;
   } else s_prev_score=-1;
 
+  if (s_viewing_ticker) {
+    build_team_game_str(s_ticker_team_str, GAME_LEN);
+    if (s_ticker_cur) text_layer_set_text(s_ticker_cur, s_ticker_team_str);
+  }
+
   t = dict_find(iter,KEY_TEAM_IDX);
   if(t){
     int idx=(int)t->value->int32;
@@ -790,6 +903,7 @@ static void init(void) {
 
   tick_timer_service_subscribe(MINUTE_UNIT,tick_handler);
   battery_state_service_subscribe(battery_handler);
+  accel_tap_service_subscribe(tap_handler);
   s_battery_pct=battery_state_service_peek().charge_percent;
 
   app_message_open(512,64);
@@ -801,6 +915,7 @@ static void init(void) {
 static void deinit(void) {
   tick_timer_service_unsubscribe();
   battery_state_service_unsubscribe();
+  accel_tap_service_unsubscribe();
   window_destroy(s_window);
 }
 

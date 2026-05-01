@@ -447,6 +447,19 @@ function fetchGameData(teamIdx) {
   xhr.send();
 }
 
+function findLastTeamGame(gamesList, target, stateFilter) {
+  var result = null;
+  for (var i = 0; i < gamesList.length; i++) {
+    var g     = gamesList[i];
+    var awayA = toInternal((g.teams.away.team.abbreviation || "").toUpperCase());
+    var homeA = toInternal((g.teams.home.team.abbreviation || "").toUpperCase());
+    if (awayA !== target && homeA !== target) continue;
+    var state = (g.status && g.status.abstractGameState) || "";
+    if (!stateFilter || state === stateFilter) result = g;
+  }
+  return result;
+}
+
 function findTeamGame(gamesList, target, stateFilter) {
   for (var i = 0; i < gamesList.length; i++) {
     var g     = gamesList[i];
@@ -480,9 +493,9 @@ function processGames(dates, todayGames, abbr, today, yesterday, tomorrow) {
     if (preGame && isWithinTwoHours(preGame.gameDate)) game1 = preGame;
   }
 
-  // Pass 2: FINAL — prefer today over yesterday
+  // Pass 2: FINAL — prefer today; use last game of day so DH G2 shows by default
   if (!game1) {
-    game1 = findTeamGame(todayGames, target, "Final");
+    game1 = findLastTeamGame(todayGames, target, "Final");
   }
   if (!game1) {
     var yGames = [];

@@ -521,7 +521,7 @@ static void canvas_update(Layer *layer, GContext *ctx) {
     if (tg_score[0]) graphics_draw_text(ctx, tg_score, f28,
       GRect(w/2-score_w/2, score_y, score_w, score_h),
       GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-    int fl_rec_y = score_y + score_h;
+    int fl_rec_y = rec_y;
     int fl_st_y  = fl_rec_y + 16;
     int fl_dec_y = fl_st_y + inn_h + 4;
     int fl_ret_y = fl_dec_y + 16;

@@ -31,7 +31,11 @@ Speed is adjustable in settings
 
 ✋ Wrist Flick
 Flick your wrist to zoom in on any game in the ticker:
-- Flick once: the game currently shown in the ticker fills the main display with full score, teams, and status
+- Flick once: the game currently shown in the ticker fills the main display with full detail:
+  - Team abbreviations with current season W-L records
+  - Live score or final score
+  - Inning / status (e.g. Top 7, Final, 7:05 PM)
+  - Winning and losing pitcher, save pitcher (final games)
 - The ticker freezes and shows your team's current score so you never lose track
 - Flick again: returns to your team's game and the ticker resumes cycling normally
 

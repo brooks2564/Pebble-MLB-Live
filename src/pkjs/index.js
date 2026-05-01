@@ -552,7 +552,7 @@ function processGames(dates, todayGames, abbr, today, yesterday, tomorrow) {
 
   // Next game: scan forward through all fetched dates to handle off-days
   var nextGame = "";
-  if (status === "final" && (!game2 || g2status === "final")) {
+  if (status === "final" && (allTeamGames.length < 2 || g2status === "final")) {
     var nextG = null;
     for (var d = 0; d < dates.length && !nextG; d++) {
       if ((dates[d].date || "") <= today) continue;

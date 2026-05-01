@@ -330,8 +330,8 @@ static void ticker_parse_and_start(void) {
   }
 }
 
-// ── Wrist flick ────────────────────────────────────────────────────────────
-static void tap_handler(AccelAxisType axis, int32_t direction) {
+// ── Wrist flick + back button ──────────────────────────────────────────────
+static void toggle_ticker_view(void) {
   if (s_game_count == 0) return;
   if (!s_viewing_ticker) {
     s_viewing_ticker = true;
@@ -345,6 +345,18 @@ static void tap_handler(AccelAxisType axis, int32_t direction) {
       s_ticker_timer=app_timer_register((uint32_t)s_ticker_speed,ticker_advance,NULL);
   }
   layer_mark_dirty(s_canvas);
+}
+
+static void tap_handler(AccelAxisType axis, int32_t direction) {
+  toggle_ticker_view();
+}
+
+static void back_click_handler(ClickRecognizerRef recognizer, void *context) {
+  toggle_ticker_view();
+}
+
+static void click_config_provider(void *context) {
+  window_single_click_subscribe(BUTTON_ID_BACK, back_click_handler);
 }
 
 // ── Team colors ────────────────────────────────────────────────────────────
@@ -905,6 +917,8 @@ static void window_load(Window *window) {
   Layer *root=window_get_root_layer(window);
   GRect bounds=layer_get_bounds(root);
   int w=bounds.size.w;
+
+  window_set_click_config_provider(window, click_config_provider);
 
   s_canvas=layer_create(bounds);
   layer_set_update_proc(s_canvas,canvas_update);

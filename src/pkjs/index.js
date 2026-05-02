@@ -77,6 +77,7 @@ var KEY_GAME2_SCORE  = 30;
 var KEY_TZ_OFFSET    = 31;
 var KEY_TICKER_SPEED = 32;
 var KEY_AWAY_PITCHER = 33;
+var KEY_HR_SOUND     = 40;
 var KEY_HOME_PITCHER = 34;
 var KEY_WIN_PITCHER  = 35;
 var KEY_LOSS_PITCHER = 36;
@@ -134,6 +135,7 @@ var SPEED_NUM = {"5000":5000, "10000":10000, "30000":30000, "60000":60000};
 var gTeamIdx     = 13;
 var gVibrate     = true;
 var gBatteryBar  = true;
+var gHrSound     = true;
 var gTzOffset    = -5;
 var gTickerSpeed = "5000";   // STRING to avoid Pebble JS number truncation bugs
 var gAllGames    = [];
@@ -146,6 +148,7 @@ function loadFromClay() {
   if (!isNaN(pIdx) && pIdx >= 0 && pIdx < TEAMS.length) gTeamIdx = pIdx;
   if (cs.VIBRATE     !== undefined) gVibrate    = !!cs.VIBRATE;
   if (cs.BATTERY_BAR !== undefined) gBatteryBar = !!cs.BATTERY_BAR;
+  if (cs.HR_SOUND    !== undefined) gHrSound    = !!cs.HR_SOUND;
   var pTz = parseInt(cs.TZ_OFFSET, 10);
   if (!isNaN(pTz)) gTzOffset = pTz;
   var spd = cs.TICKER_SPEED !== undefined ? String(cs.TICKER_SPEED) : null;
@@ -628,6 +631,7 @@ function processGames(dates, todayGames, abbr, today, yesterday, tomorrow) {
   msg[KEY_HOME_WINS]    = homeRec.wins   || 0;
   msg[KEY_HOME_LOSSES]  = homeRec.losses || 0;
   msg[KEY_VIBRATE]      = gVibrate ? 1 : 0;
+  msg[KEY_HR_SOUND]     = gHrSound ? 1 : 0;
   msg[KEY_BATTER]       = "";
   msg[KEY_PITCH_SPEED]  = 0;
   msg[KEY_LAST_PLAY]    = "";

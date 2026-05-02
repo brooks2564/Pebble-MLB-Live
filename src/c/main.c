@@ -40,6 +40,7 @@
 #define KEY_SAVE_PITCHER 37
 #define KEY_TV_NETWORK   38
 #define KEY_TICKER_DETAIL 39
+#define KEY_HR_SOUND     40
 
 #define NUM_TEAMS    30
 #define PERSIST_TEAM 1
@@ -47,6 +48,7 @@
 #define PERSIST_BAT  3
 #define PERSIST_TZ   4
 #define PERSIST_TICKER_SPEED 5
+#define PERSIST_HR_SOUND     6
 
 #ifdef PBL_PLATFORM_EMERY
 #define TICKER_H 24
@@ -116,6 +118,7 @@ static int  s_battery_pct    = 100;
 static int  s_team_idx       = 2;
 static int  s_prev_score     = -1;
 static bool s_i_am_away;
+static bool s_hr_sound       = true;
 static int  s_ticker_speed   = 5000;  // ms between ticker advances (default 5s)
 static char s_away_pitcher[16] = "";
 static char s_home_pitcher[16] = "";
@@ -347,9 +350,18 @@ static void toggle_ticker_view(void) {
   layer_mark_dirty(s_canvas);
 }
 
+#ifdef PBL_TOUCH
+static void touch_handler(const TouchEvent *event, void *context) {
+  if (event->type != TouchEvent_Liftoff) return;
+  GRect bounds = layer_get_bounds(window_get_root_layer(s_window));
+  int split = bounds.size.h * 3 / 10;
+  if (event->y < split) toggle_ticker_view();
+}
+#else
 static void tap_handler(AccelAxisType axis, int32_t direction) {
   toggle_ticker_view();
 }
+#endif
 
 
 // ── Team colors ────────────────────────────────────────────────────────────
@@ -548,7 +560,11 @@ static void canvas_update(Layer *layer, GContext *ctx) {
         GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
     }
     graphics_context_set_text_color(ctx, GColorDarkGray);
+#ifdef PBL_TOUCH
+    graphics_draw_text(ctx, "tap top to return", fsm,
+#else
     graphics_draw_text(ctx, "flick to return", fsm,
+#endif
       GRect(0, fl_ret_y, w, 14),
       GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
     return;
@@ -794,6 +810,8 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
   t = dict_find(iter,KEY_HOME_LOSSES); if(t) s_home_losses =(int)t->value->int32;
   t = dict_find(iter,KEY_VIBRATE);
   if(t){s_vibrate=(bool)t->value->int32;persist_write_bool(PERSIST_VIB,s_vibrate);}
+  t = dict_find(iter,KEY_HR_SOUND);
+  if(t){s_hr_sound=(bool)t->value->int32;persist_write_bool(PERSIST_HR_SOUND,s_hr_sound);}
   t = dict_find(iter,KEY_BATTER);
   if(t){strncpy(s_batter,t->value->cstring,13);s_batter[13]=0;}
   t = dict_find(iter,KEY_PITCH_SPEED); if(t) s_pitch_speed=(int)t->value->int32;
@@ -853,7 +871,15 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
 
   if(strcmp(s_status,"live")==0 && s_vibrate){
     int my=s_i_am_away?s_away_score:s_home_score;
-    if(s_prev_score>=0 && my>s_prev_score) vibes_double_pulse();
+    if(s_prev_score>=0 && my>s_prev_score){
+      if(s_hr_sound && strcmp(s_last_play,"Home Run")==0){
+        static const uint32_t charge_segs[] = {150,75,150,75,150,75,300,75,150,75,600};
+        VibePattern charge = {.durations=charge_segs,.num_segments=11};
+        vibes_enqueue_custom_pattern(charge);
+      } else {
+        vibes_double_pulse();
+      }
+    }
     s_prev_score=my;
   } else s_prev_score=-1;
 
@@ -963,6 +989,7 @@ static void init(void) {
   if(persist_exists(PERSIST_BAT))          s_battery_bar =persist_read_bool(PERSIST_BAT);
   if(persist_exists(PERSIST_TZ))           s_tz_offset   =persist_read_int(PERSIST_TZ);
   if(persist_exists(PERSIST_TICKER_SPEED)) s_ticker_speed=persist_read_int(PERSIST_TICKER_SPEED);
+  if(persist_exists(PERSIST_HR_SOUND))    s_hr_sound    =persist_read_bool(PERSIST_HR_SOUND);
 
   time_t now=time(NULL);
   update_clock(localtime(&now));
@@ -975,7 +1002,11 @@ static void init(void) {
 
   tick_timer_service_subscribe(MINUTE_UNIT,tick_handler);
   battery_state_service_subscribe(battery_handler);
+#ifdef PBL_TOUCH
+  touch_service_subscribe(touch_handler, NULL);
+#else
   accel_tap_service_subscribe(tap_handler);
+#endif
   s_battery_pct=battery_state_service_peek().charge_percent;
 
   app_message_open(512,64);
@@ -987,7 +1018,11 @@ static void init(void) {
 static void deinit(void) {
   tick_timer_service_unsubscribe();
   battery_state_service_unsubscribe();
+#ifdef PBL_TOUCH
+  touch_service_unsubscribe();
+#else
   accel_tap_service_unsubscribe();
+#endif
   window_destroy(s_window);
 }
 

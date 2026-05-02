@@ -68,6 +68,13 @@
       },
       {
         "type": "toggle",
+        "messageKey": "HR_SOUND",
+        "label": "Charge on Home Run",
+        "description": "Charge rhythm vibration when your team hits a homer",
+        "defaultValue": true
+      },
+      {
+        "type": "toggle",
         "messageKey": "BATTERY_BAR",
         "label": "Battery Bar",
         "description": "Show battery level at bottom of screen",

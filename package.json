@@ -68,7 +68,8 @@
       "LOSS_PITCHER": 36,
       "SAVE_PITCHER": 37,
       "TV_NETWORK": 38,
-      "TICKER_DETAIL": 39
+      "TICKER_DETAIL": 39,
+      "HR_SOUND": 40
     },
     "resources": {
       "media": [

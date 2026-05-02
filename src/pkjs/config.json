@@ -74,7 +74,7 @@
         "defaultValue": 100,
         "options": [
           { "label": "Off",    "value": 0   },
-          { "label": "Low",    "value": 15  },
+          { "label": "Low",    "value": 20  },
           { "label": "Medium", "value": 50  },
           { "label": "High",   "value": 100 }
         ]

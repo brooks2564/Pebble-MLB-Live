@@ -806,17 +806,22 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "HR_TEST: firing vibe+sound vol=%d", s_hr_volume);
     vibes_short_pulse();
 #ifdef PBL_SPEAKER
-    uint8_t vel = (uint8_t)(s_hr_volume > 0 ? s_hr_volume : 100);
-    SpeakerNote charge_notes[] = {
-      {67, SpeakerWaveformSawtooth, 200, vel, 0},
-      {72, SpeakerWaveformSawtooth, 200, vel, 0},
-      {76, SpeakerWaveformSawtooth, 200, vel, 0},
-      {79, SpeakerWaveformSawtooth, 400, vel, 0},
-      {76, SpeakerWaveformSawtooth, 200, vel, 0},
-      {79, SpeakerWaveformSawtooth, 700, vel, 0},
-    };
-    bool ok = speaker_play_notes(charge_notes, 6, 100);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "speaker_play_notes=%d", (int)ok);
+    { int v = s_hr_volume > 0 ? s_hr_volume : 100;
+      uint8_t vel = (uint8_t)v;
+      SpeakerWaveform wf = v <= 20 ? SpeakerWaveformSine :
+                           v <= 50 ? SpeakerWaveformTriangle :
+                                     SpeakerWaveformSawtooth;
+      SpeakerNote charge_notes[] = {
+        {67, wf, 200, vel, 0},
+        {72, wf, 200, vel, 0},
+        {76, wf, 200, vel, 0},
+        {79, wf, 400, vel, 0},
+        {76, wf, 200, vel, 0},
+        {79, wf, 700, vel, 0},
+      };
+      bool ok = speaker_play_notes(charge_notes, 6, 100);
+      APP_LOG(APP_LOG_LEVEL_DEBUG, "speaker_play_notes=%d", (int)ok);
+    }
 #else
     APP_LOG(APP_LOG_LEVEL_DEBUG, "NO PBL_SPEAKER");
 #endif
@@ -886,16 +891,20 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
         VibePattern charge = {.durations=charge_segs,.num_segments=11};
         vibes_enqueue_custom_pattern(charge);
 #ifdef PBL_SPEAKER
-        uint8_t vel = (uint8_t)s_hr_volume;
-        SpeakerNote charge_notes[] = {
-          {67, SpeakerWaveformSawtooth, 200, vel, 0},
-          {72, SpeakerWaveformSawtooth, 200, vel, 0},
-          {76, SpeakerWaveformSawtooth, 200, vel, 0},
-          {79, SpeakerWaveformSawtooth, 400, vel, 0},
-          {76, SpeakerWaveformSawtooth, 200, vel, 0},
-          {79, SpeakerWaveformSawtooth, 700, vel, 0},
-        };
-        speaker_play_notes(charge_notes, 6, 100);
+        { uint8_t vel = (uint8_t)s_hr_volume;
+          SpeakerWaveform wf = s_hr_volume <= 20 ? SpeakerWaveformSine :
+                               s_hr_volume <= 50 ? SpeakerWaveformTriangle :
+                                                   SpeakerWaveformSawtooth;
+          SpeakerNote charge_notes[] = {
+            {67, wf, 200, vel, 0},
+            {72, wf, 200, vel, 0},
+            {76, wf, 200, vel, 0},
+            {79, wf, 400, vel, 0},
+            {76, wf, 200, vel, 0},
+            {79, wf, 700, vel, 0},
+          };
+          speaker_play_notes(charge_notes, 6, 100);
+        }
 #endif
       } else {
         vibes_double_pulse();

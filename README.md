@@ -1,61 +1,65 @@
-⚾ MLB Live Scores
-A live MLB scoreboard watchface for Pebble smartwatches. Scores, innings, pitch data, base runners, and a full league ticker — all on your wrist.
+# MLB Live Scores for Pebble
 
-🕹️ What It Shows
-Score area:
-Away and home team abbreviations with win/loss records
-Live score updated every minute
-Inning and half-inning (Top / Bot)
+Live MLB scores on your wrist — updated every minute from the official MLB Stats API.
 
-Pre-game (shown 2 hours before first pitch):
-Start time and weather conditions (temperature + sky)
-Probable starting pitchers for both teams with current season W-L record
-TV network carrying the game (national broadcast prioritized, falls back to your team's local)
+---
 
-Final game:
-Winning and losing pitcher (e.g. W: Cole  L: Burnes)
-Save pitcher if applicable (e.g. SV: Clase)
-Next scheduled game
+## What's New
 
-Live game detail:
-⚾ Base runner diamond — lights up which bases are occupied
-🔢 Balls / Strikes / Outs — dot indicators updated in real time
-🧢 Current batter — last name of the batter at the plate
-💨 Pitch speed and type — e.g. Fastball 97 or Slider 88
-📋 Last play result — e.g. Single, Strikeout, Home Run
+- **Home Run Sound** — Charge fanfare plays through the speaker when your team homers (Pebble Time 2 / Round 2)
+- **Volume Control** — Choose Off, Low, Medium, or High for the home run sound in Settings
+- **Test Sound** — Preview the Charge fanfare directly from Settings before a game
+- **Touch Navigation** — Tap the top of the screen (time/ticker area) to browse ticker games; tap again to return
+- **Wrist Flick or Tap** — Choose your preferred navigation style in Settings
 
-Ticker strip:
-Scrolling strip across the top showing scores from every other game today
-Cycles through all active games automatically
-Speed is adjustable in settings
+---
 
-✋ Wrist Flick
-Flick your wrist to zoom in on any game in the ticker:
-- Flick once: the game currently shown in the ticker fills the main display with full detail:
-  - Team abbreviations with current season W-L records
-  - Live score or final score
-  - Inning / status (e.g. Top 7, Final, 7:05 PM)
-  - Winning and losing pitcher, save pitcher (final games)
-- The ticker freezes and shows your team's current score so you never lose track
-- Flick again: returns to your team's game and the ticker resumes cycling normally
+## Features
 
-Always visible:
-🕐 Current time (large)
-📅 Date
-🔋 Battery bar at bottom of screen (optional)
+**Live game:**
+- Score, inning, half-inning (Top / Bot)
+- Balls / Strikes / Outs — dot indicators
+- Current batter, pitch speed and type
+- Base runner diamond (lights up occupied bases)
+- Last play result (e.g. Home Run, Strikeout, Single)
 
-⚙️ Settings
-Open the Pebble app → tap the watchface → Settings
-⚾ Favorite Team — choose from all 30 MLB teams
-📳 Vibrate on Score — double pulse when your team scores a run
-🔋 Battery Bar — toggle the battery indicator
-🌍 Timezone — set your local timezone for correct game times
-⏱️ Ticker Speed — how long each game is shown (5s, 10s, 30s, 60s)
+**Pre-game (shown 2 hours before first pitch):**
+- Start time and weather (temp + conditions)
+- Probable starters with season W-L records
+- TV network (national prioritized, falls back to local)
 
-📡 Data Source
-All data comes from the official MLB Stats API — free, no API key required. Game data refreshes every minute while the watchface is active.
+**Final game:**
+- W/L/SV pitcher decisions
+- Next scheduled game
 
-Play Ball!
+**Ticker strip:**
+- Scrolling strip of every other game today
+- Browse any game with a tap or flick
+- Adjustable speed (5s, 10s, 30s, 60s)
 
-Feel free to suggest additions or fixes to broomaninks@gmail.com
-This is my first watchface, hoping to learn more while making fun and useful watch faces and apps.
+**Always visible:** time, date, battery bar (optional), team colors (Pebble Time 2)
+
+---
+
+## Settings
+
+| Setting | Options |
+|---|---|
+| Team | All 30 MLB teams |
+| Vibrate on Score | On / Off |
+| Home Run Sound | Off / Low / Medium / High |
+| Test HR Sound | — / Play Charge ▶ |
+| Battery Bar | On / Off |
+| Browse Ticker Games | Tap Top / Wrist Flick |
+| Timezone | ET / CT / MT / PT / GMT / CET |
+| Ticker Speed | 5s / 10s / 30s / 60s |
+
+---
+
+## Data
+
+Official MLB Stats API — free, no API key. Refreshes every minute.
+
+---
+
+Questions or suggestions: broomaninks@gmail.com

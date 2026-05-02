@@ -67,11 +67,28 @@
         "defaultValue": true
       },
       {
-        "type": "toggle",
-        "messageKey": "HR_SOUND",
-        "label": "Charge on Home Run",
-        "description": "Charge rhythm vibration when your team hits a homer",
-        "defaultValue": true
+        "type": "select",
+        "messageKey": "HR_VOLUME",
+        "label": "Home Run Sound",
+        "description": "Charge fanfare when your team homers (Pebble Time 2 / Round 2)",
+        "defaultValue": 100,
+        "options": [
+          { "label": "Off",    "value": 0   },
+          { "label": "Low",    "value": 40  },
+          { "label": "Medium", "value": 65  },
+          { "label": "High",   "value": 100 }
+        ]
+      },
+      {
+        "type": "select",
+        "messageKey": "HR_TEST",
+        "label": "Test HR Sound",
+        "description": "Save settings with Play selected to hear the Charge",
+        "defaultValue": 0,
+        "options": [
+          { "label": "—",              "value": 0 },
+          { "label": "Play Charge ▶",  "value": 1 }
+        ]
       },
       {
         "type": "toggle",
@@ -79,6 +96,27 @@
         "label": "Battery Bar",
         "description": "Show battery level at bottom of screen",
         "defaultValue": true
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Navigation",
+        "size": 4
+      },
+      {
+        "type": "select",
+        "messageKey": "NAV_MODE",
+        "label": "Browse Ticker Games",
+        "description": "How to view other games from the ticker (Pebble Time 2 / Round 2 support tap)",
+        "defaultValue": 1,
+        "options": [
+          { "label": "Tap top of screen", "value": 1 },
+          { "label": "Wrist flick",       "value": 0 }
+        ]
       }
     ]
   },
@@ -97,12 +135,12 @@
         "description": "Used to display correct game start times",
         "defaultValue": -5,
         "options": [
-          { "label": "ET — Eastern (UTC-5)",      "value": -5 },
-          { "label": "CT — Central (UTC-6)",      "value": -6 },
-          { "label": "MT — Mountain (UTC-7)",     "value": -7 },
-          { "label": "PT — Pacific (UTC-8)",      "value": -8 },
-          { "label": "UK — GMT/BST (UTC+0)",      "value": 0  },
-          { "label": "CET — Central Europe (UTC+1)", "value": 1 }
+          { "label": "ET — Eastern (UTC-5)",         "value": -5 },
+          { "label": "CT — Central (UTC-6)",         "value": -6 },
+          { "label": "MT — Mountain (UTC-7)",        "value": -7 },
+          { "label": "PT — Pacific (UTC-8)",         "value": -8 },
+          { "label": "UK — GMT/BST (UTC+0)",         "value": 0  },
+          { "label": "CET — Central Europe (UTC+1)", "value": 1  }
         ]
       },
       {

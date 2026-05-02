@@ -14,11 +14,11 @@ CC_NAME = 'gcc'
 CC_SRC_F = []
 CC_TGT_F = ['-c', '-o']
 CC_VERSION = ('14', '2', '1')
-CFLAGS = ['-std=c99', '-mcpu=cortex-m3', '-mthumb', '-ffunction-sections', '-fdata-sections', '-fcommon', '-g', '-fPIE', '-Os', '-D_TIME_H_', '-Dtime_t=long', '-Wall', '-Wextra', '-Werror', '-Wno-unused-parameter', '-Wno-error=unused-function', '-Wno-error=unused-variable', '-Wno-error=builtin-declaration-mismatch', '-Wno-error=format-truncation', '-Wno-error=expansion-to-defined', '-Wno-error=zero-length-bounds', '-Wno-error=cast-function-type']
+CFLAGS = ['-std=c99', '-mcpu=cortex-m3', '-mthumb', '-ffunction-sections', '-fdata-sections', '-fcommon', '-g', '-fPIE', '-Os', '-D_TIME_H_', '-Dtime_t=long', '-Wall', '-Wextra', '-Werror', '-Wno-unused-parameter', '-Wno-error=unused-function', '-Wno-error=unused-variable', '-Wno-error=builtin-declaration-mismatch', '-Wno-error=format-truncation', '-Wno-error=expansion-to-defined', '-Wno-error=zero-length-bounds', '-Wno-error=cast-function-type', '-Wno-error=unused-value']
 CFLAGS_MACBUNDLE = ['-fPIC']
 CFLAGS_cshlib = ['-fPIC']
 CPPPATH_ST = '-I%s'
-DEFINES = ['RELEASE', 'PBL_PLATFORM_EMERY', 'PBL_COLOR', 'PBL_RECT', 'PBL_MICROPHONE', 'PBL_SMARTSTRAP', 'PBL_HEALTH', 'PBL_SMARTSTRAP_POWER', 'PBL_COMPASS', 'PBL_DISPLAY_WIDTH=200', 'PBL_DISPLAY_HEIGHT=228', 'PBL_SDK_3']
+DEFINES = ['RELEASE', 'PBL_PLATFORM_EMERY', 'PBL_COLOR', 'PBL_RECT', 'PBL_MICROPHONE', 'PBL_SMARTSTRAP', 'PBL_HEALTH', 'PBL_SMARTSTRAP_POWER', 'PBL_COMPASS', 'PBL_TOUCH', 'PBL_RGB_BACKLIGHT', 'PBL_SPEAKER', 'PBL_DISPLAY_WIDTH=200', 'PBL_DISPLAY_HEIGHT=228', 'PBL_SDK_3']
 DEFINES_ST = '-D%s'
 DEST_BINFMT = 'elf'
 DEST_CPU = 'arm'
@@ -28,14 +28,15 @@ LD = 'arm-none-eabi-ld'
 LIBDIR = '/usr/local/lib64'
 LIBPATH_ST = '-L%s'
 LIB_DIR = 'node_modules'
-LIB_JSON = []
+LIB_JSON = [{'name': 'pebble-clay', 'version': '1.0.4-flint', 'description': 'Pebble Config Framework', 'scripts': {}, 'files': ['dist.zip', 'index.js', 'LICENSE'], 'repository': {'type': 'git', 'url': 'git+https://github.com/pebble/clay.git'}, 'keywords': ['pebble', 'config', 'configuration', 'pebble-package'], 'author': 'Pebble Technology', 'license': 'MIT', 'bugs': {'url': 'https://github.com/pebble/clay/issues'}, 'pebble': {'projectType': 'package', 'sdkVersion': '3', 'targetPlatforms': ['aplite', 'basalt', 'chalk', 'diorite', 'emery', 'flint'], 'resources': {'media': []}, 'capabilities': ['configurable']}, 'homepage': 'https://github.com/pebble/clay#readme', 'devDependencies': {}, 'dependencies': {}, 'path': 'node_modules/pebble-clay/dist', 'js_paths': ['node_modules/pebble-clay/dist/js/index.js']}]
+LIB_RESOURCES_JSON = {'pebble-clay': []}
 LIB_ST = '-l%s'
 LINKFLAGS = ['-mcpu=cortex-m3', '-mthumb', '-Wl,--gc-sections', '-Wl,--warn-common', '-fPIE', '-Os']
 LINKFLAGS_MACBUNDLE = ['-bundle', '-undefined', 'dynamic_lookup']
 LINKFLAGS_cshlib = ['-shared']
 LINKFLAGS_cstlib = ['-Wl,-Bstatic']
 LINK_CC = ['arm-none-eabi-gcc']
-MESSAGE_KEYS = {'AWAY_ABBR': 1, 'HOME_ABBR': 2, 'AWAY_SCORE': 3, 'HOME_SCORE': 4, 'INNING': 5, 'INNING_HALF': 6, 'BALLS': 7, 'STRIKES': 8, 'OUTS': 9, 'STATUS': 10, 'TEAM_IDX': 11, 'START_TIME': 12, 'AWAY_WINS': 13, 'AWAY_LOSSES': 14, 'HOME_WINS': 15, 'HOME_LOSSES': 16, 'VIBRATE': 17, 'BATTER': 18, 'PITCH_SPEED': 19, 'LAST_PLAY': 20, 'ON_FIRST': 21, 'ON_SECOND': 22, 'ON_THIRD': 23, 'NEXT_GAME': 24, 'BATTERY_BAR': 25, 'TICKER': 26, 'WEATHER': 27, 'PITCH_TYPE': 28, 'GAME2_STATUS': 29, 'GAME2_SCORE': 30, 'TZ_OFFSET': 31, 'TICKER_SPEED': 32}
+MESSAGE_KEYS = {'AWAY_ABBR': 1, 'HOME_ABBR': 2, 'AWAY_SCORE': 3, 'HOME_SCORE': 4, 'INNING': 5, 'INNING_HALF': 6, 'BALLS': 7, 'STRIKES': 8, 'OUTS': 9, 'STATUS': 10, 'TEAM_IDX': 11, 'START_TIME': 12, 'AWAY_WINS': 13, 'AWAY_LOSSES': 14, 'HOME_WINS': 15, 'HOME_LOSSES': 16, 'VIBRATE': 17, 'BATTER': 18, 'PITCH_SPEED': 19, 'LAST_PLAY': 20, 'ON_FIRST': 21, 'ON_SECOND': 22, 'ON_THIRD': 23, 'NEXT_GAME': 24, 'BATTERY_BAR': 25, 'TICKER': 26, 'WEATHER': 27, 'PITCH_TYPE': 28, 'GAME2_STATUS': 29, 'GAME2_SCORE': 30, 'TZ_OFFSET': 31, 'TICKER_SPEED': 32, 'AWAY_PITCHER': 33, 'HOME_PITCHER': 34, 'WIN_PITCHER': 35, 'LOSS_PITCHER': 36, 'SAVE_PITCHER': 37, 'TV_NETWORK': 38, 'TICKER_DETAIL': 39, 'HR_VOLUME': 40, 'HR_TEST': 41, 'NAV_MODE': 42}
 MESSAGE_KEYS_DEFINITION = '/home/brooks2564/Pebble-MLB-Live/build/src/message_keys.auto.c'
 MESSAGE_KEYS_HEADER = '/home/brooks2564/Pebble-MLB-Live/build/include/message_keys.auto.h'
 MESSAGE_KEYS_JSON = '/home/brooks2564/Pebble-MLB-Live/build/js/message_keys.json'
@@ -43,16 +44,16 @@ NODE_PATH = '/home/brooks2564/.pebble-sdk/SDKs/current/node_modules'
 PEBBLE_SDK_COMMON = '/home/brooks2564/.pebble-sdk/SDKs/current/sdk-core/pebble/common'
 PEBBLE_SDK_PLATFORM = '/home/brooks2564/.pebble-sdk/SDKs/current/sdk-core/pebble/emery'
 PEBBLE_SDK_ROOT = '/home/brooks2564/.pebble-sdk/SDKs/current/sdk-core/pebble'
-PLATFORM = {'NAME': 'emery', 'MAX_APP_BINARY_SIZE': 131072, 'MAX_APP_MEMORY_SIZE': 131072, 'MAX_WORKER_MEMORY_SIZE': 10240, 'MAX_RESOURCES_SIZE_APPSTORE': 262144, 'MAX_RESOURCES_SIZE': 1048576, 'DEFINES': ['PBL_PLATFORM_EMERY', 'PBL_COLOR', 'PBL_RECT', 'PBL_MICROPHONE', 'PBL_SMARTSTRAP', 'PBL_HEALTH', 'PBL_SMARTSTRAP_POWER', 'PBL_COMPASS', 'PBL_DISPLAY_WIDTH=200', 'PBL_DISPLAY_HEIGHT=228'], 'BUILD_DIR': 'emery', 'BUNDLE_BIN_DIR': 'emery', 'ADDITIONAL_TEXT_LINES_FOR_PEBBLE_H': [], 'MAX_FONT_GLYPH_SIZE': 512, 'TAGS': ['emery', 'color', 'rect', 'mic', 'strap', 'health', 'strappower', 'compass', '200w', '228h']}
+PLATFORM = {'NAME': 'emery', 'MAX_APP_BINARY_SIZE': 131072, 'MAX_APP_MEMORY_SIZE': 131072, 'MAX_WORKER_MEMORY_SIZE': 10240, 'MAX_RESOURCES_SIZE_APPSTORE': 262144, 'MAX_RESOURCES_SIZE': 1048576, 'DEFINES': ['PBL_PLATFORM_EMERY', 'PBL_COLOR', 'PBL_RECT', 'PBL_MICROPHONE', 'PBL_SMARTSTRAP', 'PBL_HEALTH', 'PBL_SMARTSTRAP_POWER', 'PBL_COMPASS', 'PBL_TOUCH', 'PBL_RGB_BACKLIGHT', 'PBL_SPEAKER', 'PBL_DISPLAY_WIDTH=200', 'PBL_DISPLAY_HEIGHT=228'], 'BUILD_DIR': 'emery', 'BUNDLE_BIN_DIR': 'emery', 'ADDITIONAL_TEXT_LINES_FOR_PEBBLE_H': [], 'MAX_FONT_GLYPH_SIZE': 512, 'TAGS': ['emery', 'color', 'rect', 'mic', 'strap', 'health', 'strappower', 'compass', 'touch', 'speaker', '200w', '228h']}
 PLATFORM_NAME = 'emery'
 PREFIX = '/usr/local'
-PROJECT_INFO = {'displayName': 'MLB Live', 'shortName': 'MLB Live', 'longName': 'MLB Live', 'uuid': '2ef10c51-88ea-4939-8e5b-76a139743d33', 'sdkVersion': '3', 'enableMultiJS': True, 'targetPlatforms': ['aplite', 'basalt', 'chalk', 'diorite', 'emery', 'flint', 'gabbro'], 'watchapp': {'watchface': True}, 'capabilities': ['configurable'], 'messageKeys': {'AWAY_ABBR': 1, 'HOME_ABBR': 2, 'AWAY_SCORE': 3, 'HOME_SCORE': 4, 'INNING': 5, 'INNING_HALF': 6, 'BALLS': 7, 'STRIKES': 8, 'OUTS': 9, 'STATUS': 10, 'TEAM_IDX': 11, 'START_TIME': 12, 'AWAY_WINS': 13, 'AWAY_LOSSES': 14, 'HOME_WINS': 15, 'HOME_LOSSES': 16, 'VIBRATE': 17, 'BATTER': 18, 'PITCH_SPEED': 19, 'LAST_PLAY': 20, 'ON_FIRST': 21, 'ON_SECOND': 22, 'ON_THIRD': 23, 'NEXT_GAME': 24, 'BATTERY_BAR': 25, 'TICKER': 26, 'WEATHER': 27, 'PITCH_TYPE': 28, 'GAME2_STATUS': 29, 'GAME2_SCORE': 30, 'TZ_OFFSET': 31, 'TICKER_SPEED': 32}, 'resources': {'media': [{'type': 'bitmap', 'name': 'IMAGE_MENU_ICON', 'file': 'images/menu_icon.png', 'menuIcon': True}, {'type': 'png', 'name': 'IMAGE_BALLDIAMOND', 'file': 'images/balldiamond.png', 'targetPlatforms': ['basalt', 'chalk', 'emery', 'gabbro']}]}, 'name': 'mlb-live-scores', 'versionLabel': '3.0', 'companyName': 'Brooman Inks', 'appKeys': {'AWAY_ABBR': 1, 'HOME_ABBR': 2, 'AWAY_SCORE': 3, 'HOME_SCORE': 4, 'INNING': 5, 'INNING_HALF': 6, 'BALLS': 7, 'STRIKES': 8, 'OUTS': 9, 'STATUS': 10, 'TEAM_IDX': 11, 'START_TIME': 12, 'AWAY_WINS': 13, 'AWAY_LOSSES': 14, 'HOME_WINS': 15, 'HOME_LOSSES': 16, 'VIBRATE': 17, 'BATTER': 18, 'PITCH_SPEED': 19, 'LAST_PLAY': 20, 'ON_FIRST': 21, 'ON_SECOND': 22, 'ON_THIRD': 23, 'NEXT_GAME': 24, 'BATTERY_BAR': 25, 'TICKER': 26, 'WEATHER': 27, 'PITCH_TYPE': 28, 'GAME2_STATUS': 29, 'GAME2_SCORE': 30, 'TZ_OFFSET': 31, 'TICKER_SPEED': 32}}
-REQUESTED_PLATFORMS = ['aplite', 'basalt', 'chalk', 'diorite', 'emery', 'flint', 'gabbro']
-RESOURCES_JSON = [{'type': 'bitmap', 'name': 'IMAGE_MENU_ICON', 'file': 'images/menu_icon.png', 'menuIcon': True}, {'type': 'png', 'name': 'IMAGE_BALLDIAMOND', 'file': 'images/balldiamond.png', 'targetPlatforms': ['basalt', 'chalk', 'emery', 'gabbro']}]
+PROJECT_INFO = {'displayName': 'MLB Live', 'shortName': 'MLB Live', 'longName': 'MLB Live', 'uuid': '2ef10c51-88ea-4939-8e5b-76a139743d33', 'sdkVersion': '3', 'enableMultiJS': True, 'targetPlatforms': ['aplite', 'basalt', 'diorite', 'emery', 'flint'], 'watchapp': {'watchface': True}, 'capabilities': ['configurable'], 'messageKeys': {'AWAY_ABBR': 1, 'HOME_ABBR': 2, 'AWAY_SCORE': 3, 'HOME_SCORE': 4, 'INNING': 5, 'INNING_HALF': 6, 'BALLS': 7, 'STRIKES': 8, 'OUTS': 9, 'STATUS': 10, 'TEAM_IDX': 11, 'START_TIME': 12, 'AWAY_WINS': 13, 'AWAY_LOSSES': 14, 'HOME_WINS': 15, 'HOME_LOSSES': 16, 'VIBRATE': 17, 'BATTER': 18, 'PITCH_SPEED': 19, 'LAST_PLAY': 20, 'ON_FIRST': 21, 'ON_SECOND': 22, 'ON_THIRD': 23, 'NEXT_GAME': 24, 'BATTERY_BAR': 25, 'TICKER': 26, 'WEATHER': 27, 'PITCH_TYPE': 28, 'GAME2_STATUS': 29, 'GAME2_SCORE': 30, 'TZ_OFFSET': 31, 'TICKER_SPEED': 32, 'AWAY_PITCHER': 33, 'HOME_PITCHER': 34, 'WIN_PITCHER': 35, 'LOSS_PITCHER': 36, 'SAVE_PITCHER': 37, 'TV_NETWORK': 38, 'TICKER_DETAIL': 39, 'HR_VOLUME': 40, 'HR_TEST': 41, 'NAV_MODE': 42}, 'resources': {'media': [{'type': 'bitmap', 'name': 'IMAGE_MENU_ICON', 'file': 'images/menu_icon.png', 'menuIcon': True}, {'type': 'png', 'name': 'IMAGE_BALLDIAMOND', 'file': 'images/balldiamond.png', 'targetPlatforms': ['emery']}]}, 'name': 'mlb-live-scores', 'versionLabel': '3.0.0', 'companyName': 'Brooman Inks', 'appKeys': {'AWAY_ABBR': 1, 'HOME_ABBR': 2, 'AWAY_SCORE': 3, 'HOME_SCORE': 4, 'INNING': 5, 'INNING_HALF': 6, 'BALLS': 7, 'STRIKES': 8, 'OUTS': 9, 'STATUS': 10, 'TEAM_IDX': 11, 'START_TIME': 12, 'AWAY_WINS': 13, 'AWAY_LOSSES': 14, 'HOME_WINS': 15, 'HOME_LOSSES': 16, 'VIBRATE': 17, 'BATTER': 18, 'PITCH_SPEED': 19, 'LAST_PLAY': 20, 'ON_FIRST': 21, 'ON_SECOND': 22, 'ON_THIRD': 23, 'NEXT_GAME': 24, 'BATTERY_BAR': 25, 'TICKER': 26, 'WEATHER': 27, 'PITCH_TYPE': 28, 'GAME2_STATUS': 29, 'GAME2_SCORE': 30, 'TZ_OFFSET': 31, 'TICKER_SPEED': 32, 'AWAY_PITCHER': 33, 'HOME_PITCHER': 34, 'WIN_PITCHER': 35, 'LOSS_PITCHER': 36, 'SAVE_PITCHER': 37, 'TV_NETWORK': 38, 'TICKER_DETAIL': 39, 'HR_VOLUME': 40, 'HR_TEST': 41, 'NAV_MODE': 42}}
+REQUESTED_PLATFORMS = ['aplite', 'basalt', 'diorite', 'emery', 'flint']
+RESOURCES_JSON = [{'type': 'bitmap', 'name': 'IMAGE_MENU_ICON', 'file': 'images/menu_icon.png', 'menuIcon': True}, {'type': 'png', 'name': 'IMAGE_BALLDIAMOND', 'file': 'images/balldiamond.png', 'targetPlatforms': ['emery']}]
 RPATH_ST = '-Wl,-rpath,%s'
 SANDBOX = False
 SDK_VERSION_MAJOR = 5
-SDK_VERSION_MINOR = 89
+SDK_VERSION_MINOR = 95
 SHLIB_MARKER = None
 SIZE = 'arm-none-eabi-size'
 SONAME_ST = '-Wl,-h,%s'
@@ -60,8 +61,8 @@ STLIBPATH_ST = '-L%s'
 STLIB_MARKER = None
 STLIB_ST = '-l%s'
 SUPPORTED_PLATFORMS = ['basalt', 'aplite', 'diorite', 'chalk', 'flint', 'emery', 'gabbro']
-TARGET_PLATFORMS = ['gabbro', 'flint', 'emery', 'diorite', 'chalk', 'basalt', 'aplite']
-TIMESTAMP = 1776487403
+TARGET_PLATFORMS = ['flint', 'emery', 'diorite', 'basalt', 'aplite']
+TIMESTAMP = 1777683823
 USE_GROUPS = True
 VERBOSE = 0
 WEBPACK = ['/home/brooks2564/.pebble-sdk/SDKs/current/node_modules/.bin/webpack']

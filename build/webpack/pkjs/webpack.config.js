@@ -21,7 +21,8 @@ const resolveRoots = ["/home/brooks2564/.pebble-sdk/SDKs/current/sdk-core/pebble
 "/home/brooks2564/Pebble-MLB-Live/build/js"];
 
 // Object, { alias1: 'path1', ... }
-const resolveAliases = {"app_package.json": "/home/brooks2564/Pebble-MLB-Live/package.json"};
+const resolveAliases = {"pebble-clay": "pebble-clay/dist/js",
+"app_package.json": "/home/brooks2564/Pebble-MLB-Live/package.json"};
 
 // null or Object with key 'sourceMapFilename'
 const sourceMapConfig = {"sourceMapFilename": "pebble-js-app.js.map"};

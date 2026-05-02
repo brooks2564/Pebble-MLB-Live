@@ -57,7 +57,10 @@
         "LOSS_PITCHER": 36,
         "SAVE_PITCHER": 37,
         "TV_NETWORK": 38,
-        "TICKER_DETAIL": 39
+        "TICKER_DETAIL": 39,
+        "HR_VOLUME": 40,
+        "HR_TEST": 41,
+        "NAV_MODE": 42
     },
     "resources": {
         "media": [
@@ -78,7 +81,7 @@
         ]
     },
     "name": "mlb-live-scores",
-    "versionLabel": "3.0",
+    "versionLabel": "3.0.0",
     "companyName": "Brooman Inks",
     "appKeys": {
         "AWAY_ABBR": 1,
@@ -119,6 +122,9 @@
         "LOSS_PITCHER": 36,
         "SAVE_PITCHER": 37,
         "TV_NETWORK": 38,
-        "TICKER_DETAIL": 39
+        "TICKER_DETAIL": 39,
+        "HR_VOLUME": 40,
+        "HR_TEST": 41,
+        "NAV_MODE": 42
     }
 }

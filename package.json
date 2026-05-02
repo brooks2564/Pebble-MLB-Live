@@ -69,7 +69,9 @@
       "SAVE_PITCHER": 37,
       "TV_NETWORK": 38,
       "TICKER_DETAIL": 39,
-      "HR_SOUND": 40
+      "HR_VOLUME": 40,
+      "HR_TEST": 41,
+      "NAV_MODE": 42
     },
     "resources": {
       "media": [

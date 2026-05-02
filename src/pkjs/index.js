@@ -772,10 +772,30 @@ Pebble.addEventListener("appmessage", function(e) {
 // Clay handles showConfiguration + webviewclosed automatically (saves to localStorage,
 // sends AppMessage to watch). We listen afterward to refresh our pkjs globals and
 // trigger an immediate data refetch with the new team.
+// HR_VOLUME and HR_TEST are NOT in Clay's built-in message_keys module, so Clay
+// never sends them. We send them manually here after a brief delay.
 Pebble.addEventListener("webviewclosed", function(e) {
   if (!e || !e.response || e.response === "CANCELLED") return;
   try {
     loadFromClay();
+
+    // Send HR keys manually (Clay's message_keys module omits keys added after SDK freeze)
+    setTimeout(function() {
+      var cs = {};
+      try { cs = JSON.parse(localStorage.getItem("clay-settings")) || {}; } catch(ex) {}
+      var vol  = parseInt(cs.HR_VOLUME, 10);
+      var test = parseInt(cs.HR_TEST,   10);
+      var hrMsg = {};
+      if (!isNaN(vol))  hrMsg[KEY_HR_VOLUME] = vol;
+      if (!isNaN(test)) hrMsg[KEY_HR_TEST]   = test;
+      if (Object.keys(hrMsg).length > 0) {
+        Pebble.sendAppMessage(hrMsg,
+          function() { console.log("[MLB] HR keys sent OK vol=" + vol + " test=" + test); },
+          function(err) { console.log("[MLB] HR keys failed: " + JSON.stringify(err)); }
+        );
+      }
+    }, 600);
+
     fetchGameData(gTeamIdx);
   } catch(ex) {
     console.log("[MLB] webviewclosed error: " + ex);

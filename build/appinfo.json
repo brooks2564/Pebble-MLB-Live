@@ -59,8 +59,7 @@
         "TV_NETWORK": 38,
         "TICKER_DETAIL": 39,
         "HR_VOLUME": 40,
-        "HR_TEST": 41,
-        "NAV_MODE": 42
+        "HR_TEST": 41
     },
     "resources": {
         "media": [
@@ -124,7 +123,6 @@
         "TV_NETWORK": 38,
         "TICKER_DETAIL": 39,
         "HR_VOLUME": 40,
-        "HR_TEST": 41,
-        "NAV_MODE": 42
+        "HR_TEST": 41
     }
 }

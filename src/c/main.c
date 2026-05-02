@@ -42,7 +42,6 @@
 #define KEY_TICKER_DETAIL 39
 #define KEY_HR_VOLUME     40
 #define KEY_HR_TEST       41
-#define KEY_NAV_MODE      42
 
 #define NUM_TEAMS    30
 #define PERSIST_TEAM 1
@@ -51,7 +50,6 @@
 #define PERSIST_TZ   4
 #define PERSIST_TICKER_SPEED 5
 #define PERSIST_HR_VOLUME    6
-#define PERSIST_NAV_MODE     7
 
 #ifdef PBL_PLATFORM_EMERY
 #define TICKER_H 24
@@ -122,7 +120,6 @@ static int  s_team_idx       = 2;
 static int  s_prev_score     = -1;
 static bool s_i_am_away;
 static int  s_hr_volume      = 100; // 0=off, 40=low, 65=med, 100=high
-static int  s_nav_mode       = 1;   // 0=wrist flick, 1=tap top
 static int  s_ticker_speed   = 5000;  // ms between ticker advances (default 5s)
 static char s_away_pitcher[16] = "";
 static char s_home_pitcher[16] = "";
@@ -355,22 +352,8 @@ static void toggle_ticker_view(void) {
 }
 
 static void tap_handler(AccelAxisType axis, int32_t direction) {
-#ifdef PBL_TOUCH
-  if (s_nav_mode == 0) toggle_ticker_view();
-#else
   toggle_ticker_view();
-#endif
 }
-
-#ifdef PBL_TOUCH
-static void touch_handler(const TouchEvent *event, void *context) {
-  if (event->type != TouchEvent_Liftoff) return;
-  if (s_nav_mode != 1) return;
-  GRect bounds = layer_get_bounds(window_get_root_layer(s_window));
-  int split = bounds.size.h * 3 / 10;
-  if (event->y < split) toggle_ticker_view();
-}
-#endif
 
 
 // ── Team colors ────────────────────────────────────────────────────────────
@@ -569,12 +552,7 @@ static void canvas_update(Layer *layer, GContext *ctx) {
         GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
     }
     graphics_context_set_text_color(ctx, GColorDarkGray);
-#ifdef PBL_TOUCH
-    const char *hint = (s_nav_mode == 1) ? "tap top to return" : "flick to return";
-#else
-    const char *hint = "flick to return";
-#endif
-    graphics_draw_text(ctx, hint, fsm,
+    graphics_draw_text(ctx, "flick to return", fsm,
       GRect(0, fl_ret_y, w, 14),
       GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
     return;
@@ -824,6 +802,7 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
   if(t){s_hr_volume=(int)t->value->int32;persist_write_int(PERSIST_HR_VOLUME,s_hr_volume);}
   t = dict_find(iter,KEY_HR_TEST);
   if(t && t->value->int32==1){
+    vibes_short_pulse();
 #ifdef PBL_SPEAKER
     static const SpeakerNote charge_notes[] = {
       {67, SpeakerWaveformSawtooth, 200, 100, 0},
@@ -836,8 +815,6 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
     speaker_play_notes(charge_notes, 6, (uint8_t)(s_hr_volume > 0 ? s_hr_volume : 100));
 #endif
   }
-  t = dict_find(iter,KEY_NAV_MODE);
-  if(t){s_nav_mode=(int)t->value->int32;persist_write_int(PERSIST_NAV_MODE,s_nav_mode);}
   t = dict_find(iter,KEY_BATTER);
   if(t){strncpy(s_batter,t->value->cstring,13);s_batter[13]=0;}
   t = dict_find(iter,KEY_PITCH_SPEED); if(t) s_pitch_speed=(int)t->value->int32;
@@ -1027,7 +1004,6 @@ static void init(void) {
   if(persist_exists(PERSIST_TZ))           s_tz_offset   =persist_read_int(PERSIST_TZ);
   if(persist_exists(PERSIST_TICKER_SPEED)) s_ticker_speed=persist_read_int(PERSIST_TICKER_SPEED);
   if(persist_exists(PERSIST_HR_VOLUME))   s_hr_volume   =persist_read_int(PERSIST_HR_VOLUME);
-  if(persist_exists(PERSIST_NAV_MODE))    s_nav_mode    =persist_read_int(PERSIST_NAV_MODE);
 
   time_t now=time(NULL);
   update_clock(localtime(&now));
@@ -1041,24 +1017,19 @@ static void init(void) {
   tick_timer_service_subscribe(MINUTE_UNIT,tick_handler);
   battery_state_service_subscribe(battery_handler);
   accel_tap_service_subscribe(tap_handler);
-#ifdef PBL_TOUCH
-  touch_service_subscribe(touch_handler, NULL);
-#endif
   s_battery_pct=battery_state_service_peek().charge_percent;
 
-  app_message_open(512,64);
   app_message_register_inbox_received(inbox_received);
   app_message_register_inbox_dropped(inbox_dropped);
-  request_game_data();
+  app_message_open(512,64);
+  // Delay initial fetch so Clay's ready-event config send isn't competing with game data
+  app_timer_register(2000, (AppTimerCallback)request_game_data, NULL);
 }
 
 static void deinit(void) {
   tick_timer_service_unsubscribe();
   battery_state_service_unsubscribe();
   accel_tap_service_unsubscribe();
-#ifdef PBL_TOUCH
-  touch_service_unsubscribe();
-#endif
   window_destroy(s_window);
 }
 

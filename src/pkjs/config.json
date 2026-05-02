@@ -104,27 +104,6 @@
     "items": [
       {
         "type": "heading",
-        "defaultValue": "Navigation",
-        "size": 4
-      },
-      {
-        "type": "select",
-        "messageKey": "NAV_MODE",
-        "label": "Browse Ticker Games",
-        "description": "How to view other games from the ticker (Pebble Time 2 / Round 2 support tap)",
-        "defaultValue": 1,
-        "options": [
-          { "label": "Tap top of screen", "value": 1 },
-          { "label": "Wrist flick",       "value": 0 }
-        ]
-      }
-    ]
-  },
-  {
-    "type": "section",
-    "items": [
-      {
-        "type": "heading",
         "defaultValue": "Display",
         "size": 4
       },

@@ -597,7 +597,7 @@ function processGames(dates, todayGames, abbr, today, yesterday, tomorrow) {
   if (status === "final" && (allTeamGames.length < 2 || g2status === "final")) {
     var nextG = null;
     for (var d = 0; d < dates.length && !nextG; d++) {
-      if ((dates[d].date || "") <= today) continue;
+      if ((dates[d].date || "") < today) continue;
       nextG = findTeamGame(dates[d].games || [], target, "Preview");
     }
     if (nextG) {

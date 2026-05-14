@@ -3,45 +3,64 @@ var Clay = require('pebble-clay');
 var clayConfig = require('./config.json');
 var clay = new Clay(clayConfig);   // autoHandleEvents: true — Clay persists & sends AppMessage
 
-var SIM_MODE = false;
-function sendSimGame() {
+var SIM_MODE = true;
+
+function buildSimMsg(homeScore, lastPlay, pitchSpeed, pitchType, balls, strikes, outs) {
+  var myAbbr  = TEAMS[gTeamIdx].abbr;
+  var oppAbbr = (myAbbr === "NYY") ? "BOS" : "NYY";
   var msg = {};
-  msg[KEY_AWAY_ABBR]    = "NYY";
-  msg[KEY_HOME_ABBR]    = "BAL";
+  msg[KEY_AWAY_ABBR]    = oppAbbr;
+  msg[KEY_HOME_ABBR]    = myAbbr;
   msg[KEY_AWAY_SCORE]   = 2;
-  msg[KEY_HOME_SCORE]   = 6;
+  msg[KEY_HOME_SCORE]   = homeScore;
   msg[KEY_INNING]       = 7;
-  msg[KEY_INNING_HALF]  = 1;
-  msg[KEY_BALLS]        = 2;
-  msg[KEY_STRIKES]      = 1;
-  msg[KEY_OUTS]         = 1;
+  msg[KEY_INNING_HALF]  = 0;
+  msg[KEY_BALLS]        = balls;
+  msg[KEY_STRIKES]      = strikes;
+  msg[KEY_OUTS]         = outs;
   msg[KEY_STATUS]       = "live";
-  msg[KEY_AWAY_WINS]    = 12;
-  msg[KEY_AWAY_LOSSES]  = 6;
-  msg[KEY_HOME_WINS]    = 11;
-  msg[KEY_HOME_LOSSES]  = 7;
-  msg[KEY_VIBRATE]      = 0;
-  msg[KEY_BATTER]       = "Henderson";
-  msg[KEY_PITCH_SPEED]  = 97;
-  msg[KEY_PITCH_TYPE]   = "Fastball";
-  msg[KEY_LAST_PLAY]    = "Single";
-  msg[KEY_ON_FIRST]     = 1;
-  msg[KEY_ON_SECOND]    = 1;
+  msg[KEY_AWAY_WINS]    = 22;
+  msg[KEY_AWAY_LOSSES]  = 20;
+  msg[KEY_HOME_WINS]    = 28;
+  msg[KEY_HOME_LOSSES]  = 14;
+  msg[KEY_VIBRATE]      = 1;
+  msg[KEY_BATTER]       = "Westburg";
+  msg[KEY_PITCH_SPEED]  = pitchSpeed;
+  msg[KEY_PITCH_TYPE]   = pitchType;
+  msg[KEY_LAST_PLAY]    = lastPlay;
+  msg[KEY_ON_FIRST]     = 0;
+  msg[KEY_ON_SECOND]    = 0;
   msg[KEY_ON_THIRD]     = 0;
   msg[KEY_NEXT_GAME]    = "";
   msg[KEY_BATTERY_BAR]  = 1;
-  msg[KEY_WEATHER]      = "";
-  msg[KEY_GAME2_STATUS] = "live";
-  msg[KEY_GAME2_SCORE]  = "G2  G1: 3-2 F";
+  msg[KEY_WEATHER]      = "72 Clear";
+  msg[KEY_GAME2_STATUS] = "";
+  msg[KEY_GAME2_SCORE]  = "";
   var simExtra = {};
-  simExtra[KEY_AWAY_PITCHER]  = "";
+  simExtra[KEY_AWAY_PITCHER]  = "Cole 7-3";
   simExtra[KEY_HOME_PITCHER]  = "";
   simExtra[KEY_WIN_PITCHER]   = "";
   simExtra[KEY_LOSS_PITCHER]  = "";
   simExtra[KEY_SAVE_PITCHER]  = "";
   simExtra[KEY_TV_NETWORK]    = "ESPN";
-  simExtra[KEY_TICKER_DETAIL] = "12-6|11-7|W:Verlande|L:Burnes;34-28|31-31";
-  sendMessage(msg, simExtra);
+  simExtra[KEY_TICKER_DETAIL] = "";
+  return { msg: msg, extra: simExtra };
+}
+
+function runSimSequence() {
+  // Phase 1: baseline — establishes s_prev_score on the watch
+  var b = buildSimMsg(6, "Strike", 95, "Fastball", 1, 2, 1);
+  sendMessage(b.msg, b.extra);
+  console.log("[SIM] Baseline sent (score 6)");
+
+  // Phase 2: HR event at 5 seconds — score jumps to 7 + "Home Run"
+  setTimeout(function() {
+    var h = buildSimMsg(7, "Home Run", 0, "", 0, 0, 2);
+    sendMessage(h.msg, h.extra);
+    console.log("[SIM] Home Run event sent (score 7)");
+  }, 5000);
+
+  // Phase 3: nothing for 60 seconds (SIM_MODE stays true, appmessage is ignored)
 }
 // Keys must match #define KEY_* in main.c exactly
 var KEY_AWAY_ABBR    = 1;
@@ -419,11 +438,18 @@ function extractLivePBP(liveData) {
   result.onSecond = offense.second ? 1 : 0;
   result.onThird  = offense.third  ? 1 : 0;
 
-  // Current play
+  // Last completed play (currentPlay advances to next batter mid at-bat, losing the HR result)
   var plays       = ld.plays || {};
   var currentPlay = plays.currentPlay || {};
-  var playResult  = currentPlay.result || {};
-  result.lastPlay = describePlay(playResult.description || "");
+  var allPlays    = plays.allPlays || [];
+  var lastDesc    = "";
+  for (var i = allPlays.length - 1; i >= 0; i--) {
+    if (allPlays[i].about && allPlays[i].about.isComplete) {
+      lastDesc = ((allPlays[i].result) || {}).description || "";
+      break;
+    }
+  }
+  result.lastPlay = describePlay(lastDesc);
 
   // Last pitch in current play
   var playEvents = currentPlay.playEvents || [];
@@ -755,10 +781,12 @@ function sendMessage(dict, extraMsg) {
 // ── Pebble events ─────────────────────────────────────────────────────────
 Pebble.addEventListener("ready", function() {
   console.log("[MLB] Ready – team: " + TEAMS[gTeamIdx].abbr);
+  if (SIM_MODE) { runSimSequence(); return; }
   fetchGameData(gTeamIdx);
 });
 
 Pebble.addEventListener("appmessage", function(e) {
+  if (SIM_MODE) return;  // silence watch's minute-poll requests during sim
   var msg = e.payload;
   var idx = parseInt(msg[KEY_TEAM_IDX]);
   if (!isNaN(idx) && idx >= 0 && idx < TEAMS.length) {

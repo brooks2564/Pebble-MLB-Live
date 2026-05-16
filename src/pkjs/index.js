@@ -82,7 +82,7 @@ var KEY_TICKER_DETAIL = 39;
 var SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule";
 var LIVE_URL     = "https://statsapi.mlb.com/api/v1.1/game";
 // MLB Stats API uses shorter abbreviations for 5 teams — map to our internal 3-letter abbrs
-var MLB_TO_INTERNAL = { "KC":"KCR", "SD":"SDP", "SF":"SFG", "TB":"TBR", "WSH":"WSN" };
+var MLB_TO_INTERNAL = { "AZ":"ARI", "KC":"KCR", "SD":"SDP", "SF":"SFG", "TB":"TBR", "WSH":"WSN" };
 function toInternal(abbr) { return MLB_TO_INTERNAL[abbr] || abbr; }
 
 var TEAMS = [
@@ -442,7 +442,6 @@ function extractLivePBP(liveData) {
 
 // ── Game data fetch ───────────────────────────────────────────────────────
 function fetchGameData(teamIdx) {
-  if (SIM_MODE) { sendSimGame(); return; }
   var abbr      = TEAMS[teamIdx].abbr;
   var today     = todayDateStr();
   var yesterday = yesterdayDateStr();

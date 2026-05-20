@@ -28,8 +28,13 @@ function checkHRScoringPlay(liveData, gamePk, isUserHome) {
     var half   = (spPlay.about || {}).halfInning || "";
     var userBat = isUserHome ? (half === "bottom") : (half === "top");
     if (!userBat) continue;
-    var spDesc = ((spPlay.result) || {}).description || "";
-    if (describePlay(spDesc) === "Home Run") { foundHR = true; break; }
+    // Check result.event first (reliable MLB API enum), fall back to description parsing
+    var spEvent = ((spPlay.result) || {}).event || "";
+    var spDesc  = ((spPlay.result) || {}).description || "";
+    if (spEvent === "Home Run" || describePlay(spDesc) === "Home Run") {
+      foundHR = true;
+      break;
+    }
   }
   gLastScoringPlayCount = scoringPlays.length;
   return foundHR;
@@ -411,17 +416,18 @@ function extractLivePBP(liveData) {
   result.onThird  = offense.third  ? 1 : 0;
 
   // Last completed play (currentPlay advances to next batter mid at-bat, losing the HR result)
+  // Use result.event (reliable MLB API enum) first; fall back to parsing result.description
   var plays       = ld.plays || {};
   var currentPlay = plays.currentPlay || {};
   var allPlays    = plays.allPlays || [];
-  var lastDesc    = "";
   for (var i = allPlays.length - 1; i >= 0; i--) {
     if (allPlays[i].about && allPlays[i].about.isComplete) {
-      lastDesc = ((allPlays[i].result) || {}).description || "";
+      var evEvent = ((allPlays[i].result) || {}).event || "";
+      var evDesc  = ((allPlays[i].result) || {}).description || "";
+      result.lastPlay = evEvent ? evEvent : describePlay(evDesc);
       break;
     }
   }
-  result.lastPlay = describePlay(lastDesc);
 
   // Last pitch in current play
   var playEvents = currentPlay.playEvents || [];

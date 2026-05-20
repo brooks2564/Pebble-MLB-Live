@@ -886,10 +886,8 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
   if(strcmp(s_status,"live")==0 && s_vibrate){
     int my=s_i_am_away?s_away_score:s_home_score;
     if(s_prev_score>=0 && my>s_prev_score){
+      vibes_double_pulse();
       if(s_hr_volume > 0 && strcmp(s_last_play,"Home Run")==0){
-        static const uint32_t charge_segs[] = {150,75,150,75,150,75,300,75,150,75,600};
-        VibePattern charge = {.durations=charge_segs,.num_segments=11};
-        vibes_enqueue_custom_pattern(charge);
 #ifdef PBL_SPEAKER
         { uint8_t vel = (uint8_t)s_hr_volume;
           SpeakerWaveform wf = s_hr_volume <= 20 ? SpeakerWaveformSine :
@@ -906,8 +904,6 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
           speaker_play_notes(charge_notes, 6, 100);
         }
 #endif
-      } else {
-        vibes_double_pulse();
       }
     }
     s_prev_score=my;

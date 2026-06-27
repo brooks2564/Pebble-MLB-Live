@@ -890,7 +890,16 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
     s_wrist_flick=(bool)t->value->int32;
     persist_write_bool(PERSIST_WRIST_FLICK,s_wrist_flick);
     if(s_wrist_flick) accel_tap_service_subscribe(tap_handler);
-    else              accel_tap_service_unsubscribe();
+    else {
+      accel_tap_service_unsubscribe();
+      if(s_viewing_ticker){
+        s_viewing_ticker=false;
+        ticker_update_text();
+        if(s_game_count>1 && !s_ticker_timer)
+          s_ticker_timer=app_timer_register((uint32_t)s_ticker_speed,ticker_advance,NULL);
+        layer_mark_dirty(s_canvas);
+      }
+    }
   }
 
   if(strcmp(s_status,"live")==0 && s_vibrate){

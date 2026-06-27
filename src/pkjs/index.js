@@ -135,6 +135,7 @@ var gVibrate     = true;
 var gBatteryBar  = true;
 var gTzOffset    = -5;
 var gTickerSpeed = "5000";   // STRING to avoid Pebble JS number truncation bugs
+var gWristFlick  = true;
 var gAllGames    = [];
 
 function loadFromClay() {
@@ -149,6 +150,7 @@ function loadFromClay() {
   if (!isNaN(pTz)) gTzOffset = pTz;
   var spd = cs.TICKER_SPEED !== undefined ? String(cs.TICKER_SPEED) : null;
   if (validSpeedStr(spd)) gTickerSpeed = spd;
+  if (cs.WRIST_FLICK !== undefined) gWristFlick = !!cs.WRIST_FLICK;
 }
 loadFromClay();
 

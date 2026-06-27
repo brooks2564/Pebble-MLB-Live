@@ -70,7 +70,8 @@
       "TV_NETWORK": 38,
       "TICKER_DETAIL": 39,
       "HR_VOLUME": 40,
-      "HR_TEST": 41
+      "HR_TEST": 41,
+      "WRIST_FLICK": 42
     },
     "resources": {
       "media": [

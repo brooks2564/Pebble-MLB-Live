@@ -42,14 +42,16 @@
 #define KEY_TICKER_DETAIL 39
 #define KEY_HR_VOLUME     40
 #define KEY_HR_TEST       41
+#define KEY_WRIST_FLICK   42
 
 #define NUM_TEAMS    30
 #define PERSIST_TEAM 1
 #define PERSIST_VIB  2
 #define PERSIST_BAT  3
 #define PERSIST_TZ   4
-#define PERSIST_TICKER_SPEED 5
-#define PERSIST_HR_VOLUME    6
+#define PERSIST_TICKER_SPEED  5
+#define PERSIST_HR_VOLUME     6
+#define PERSIST_WRIST_FLICK   7
 
 #ifdef PBL_PLATFORM_EMERY
 #define TICKER_H 24
@@ -102,6 +104,7 @@ static int  s_away_losses;
 static int  s_home_wins;
 static int  s_home_losses;
 static bool s_vibrate        = true;
+static bool s_wrist_flick    = true;
 static char s_batter[14]     = "";
 static int  s_pitch_speed;
 static char s_last_play[16]  = "";
@@ -882,6 +885,13 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
       }
     }
   }
+  t = dict_find(iter,KEY_WRIST_FLICK);
+  if(t){
+    s_wrist_flick=(bool)t->value->int32;
+    persist_write_bool(PERSIST_WRIST_FLICK,s_wrist_flick);
+    if(s_wrist_flick) accel_tap_service_subscribe(tap_handler);
+    else              accel_tap_service_unsubscribe();
+  }
 
   if(strcmp(s_status,"live")==0 && s_vibrate){
     int my=s_i_am_away?s_away_score:s_home_score;
@@ -1014,8 +1024,9 @@ static void init(void) {
   if(persist_exists(PERSIST_VIB))          s_vibrate     =persist_read_bool(PERSIST_VIB);
   if(persist_exists(PERSIST_BAT))          s_battery_bar =persist_read_bool(PERSIST_BAT);
   if(persist_exists(PERSIST_TZ))           s_tz_offset   =persist_read_int(PERSIST_TZ);
-  if(persist_exists(PERSIST_TICKER_SPEED)) s_ticker_speed=persist_read_int(PERSIST_TICKER_SPEED);
-  if(persist_exists(PERSIST_HR_VOLUME))   s_hr_volume   =persist_read_int(PERSIST_HR_VOLUME);
+  if(persist_exists(PERSIST_TICKER_SPEED))  s_ticker_speed=persist_read_int(PERSIST_TICKER_SPEED);
+  if(persist_exists(PERSIST_HR_VOLUME))    s_hr_volume   =persist_read_int(PERSIST_HR_VOLUME);
+  if(persist_exists(PERSIST_WRIST_FLICK))  s_wrist_flick =persist_read_bool(PERSIST_WRIST_FLICK);
 
   time_t now=time(NULL);
   update_clock(localtime(&now));
@@ -1028,7 +1039,7 @@ static void init(void) {
 
   tick_timer_service_subscribe(MINUTE_UNIT,tick_handler);
   battery_state_service_subscribe(battery_handler);
-  accel_tap_service_subscribe(tap_handler);
+  if(s_wrist_flick) accel_tap_service_subscribe(tap_handler);
   s_battery_pct=battery_state_service_peek().charge_percent;
 
   app_message_register_inbox_received(inbox_received);

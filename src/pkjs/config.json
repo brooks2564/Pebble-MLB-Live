@@ -134,6 +134,13 @@
           { "label": "30 seconds",          "value": 30000 },
           { "label": "60 seconds",          "value": 60000 }
         ]
+      },
+      {
+        "type": "toggle",
+        "messageKey": "WRIST_FLICK",
+        "label": "Wrist Flick",
+        "description": "Flick wrist to pin the ticker game on screen",
+        "defaultValue": true
       }
     ]
   },

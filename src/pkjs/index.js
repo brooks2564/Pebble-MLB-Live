@@ -82,6 +82,7 @@ var KEY_LOSS_PITCHER = 36;
 var KEY_SAVE_PITCHER = 37;
 var KEY_TV_NETWORK   = 38;
 var KEY_TICKER_DETAIL = 39;
+var KEY_TEAM_LOGOS   = 43;
 
 // Official MLB Stats API — free, no key required
 var SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule";
@@ -136,6 +137,7 @@ var gBatteryBar  = true;
 var gTzOffset    = -5;
 var gTickerSpeed = "5000";   // STRING to avoid Pebble JS number truncation bugs
 var gWristFlick  = true;
+var gTeamLogos   = false;
 var gAllGames    = [];
 
 function loadFromClay() {
@@ -151,6 +153,7 @@ function loadFromClay() {
   var spd = cs.TICKER_SPEED !== undefined ? String(cs.TICKER_SPEED) : null;
   if (validSpeedStr(spd)) gTickerSpeed = spd;
   if (cs.WRIST_FLICK !== undefined) gWristFlick = !!cs.WRIST_FLICK;
+  if (cs.TEAM_LOGOS  !== undefined) gTeamLogos  = !!cs.TEAM_LOGOS;
 }
 loadFromClay();
 
@@ -835,14 +838,14 @@ Pebble.addEventListener("appmessage", function(e) {
 // Clay handles showConfiguration + webviewclosed automatically (saves to localStorage,
 // sends AppMessage to watch). We listen afterward to refresh our pkjs globals and
 // trigger an immediate data refetch with the new team.
-// HR_VOLUME and HR_TEST are NOT in Clay's built-in message_keys module, so Clay
-// never sends them. We send them manually here after a brief delay.
+// HR_VOLUME, HR_TEST, and TEAM_LOGOS are NOT in Clay's built-in message_keys module,
+// so Clay never sends them. We send them manually here after a brief delay.
 Pebble.addEventListener("webviewclosed", function(e) {
   if (!e || !e.response || e.response === "CANCELLED") return;
   try {
     loadFromClay();
 
-    // Send HR keys manually (Clay's message_keys module omits keys added after SDK freeze)
+    // Send keys manually (Clay's message_keys module omits keys added after SDK freeze)
     setTimeout(function() {
       var cs = {};
       try { cs = JSON.parse(localStorage.getItem("clay-settings")) || {}; } catch(ex) {}
@@ -851,10 +854,11 @@ Pebble.addEventListener("webviewclosed", function(e) {
       var hrMsg = {};
       if (!isNaN(vol))  hrMsg[KEY_HR_VOLUME] = vol;
       if (!isNaN(test)) hrMsg[KEY_HR_TEST]   = test;
+      if (cs.TEAM_LOGOS !== undefined) hrMsg[KEY_TEAM_LOGOS] = cs.TEAM_LOGOS ? 1 : 0;
       if (Object.keys(hrMsg).length > 0) {
         Pebble.sendAppMessage(hrMsg,
-          function() { console.log("[MLB] HR keys sent OK vol=" + vol + " test=" + test); },
-          function(err) { console.log("[MLB] HR keys failed: " + JSON.stringify(err)); }
+          function() { console.log("[MLB] HR/logo keys sent OK vol=" + vol + " test=" + test); },
+          function(err) { console.log("[MLB] HR/logo keys failed: " + JSON.stringify(err)); }
         );
       }
     }, 600);

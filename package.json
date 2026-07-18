@@ -71,7 +71,8 @@
       "TICKER_DETAIL": 39,
       "HR_VOLUME": 40,
       "HR_TEST": 41,
-      "WRIST_FLICK": 42
+      "WRIST_FLICK": 42,
+      "TEAM_LOGOS": 43
     },
     "resources": {
       "media": [
@@ -87,6 +88,966 @@
           "file": "images/balldiamond.png",
           "targetPlatforms": [
             "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_ARI_EM_LG",
+          "file": "images/logos/ARI_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_ARI_EM_SM",
+          "file": "images/logos/ARI_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_ARI_BA_LG",
+          "file": "images/logos/ARI_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_ARI_BA_SM",
+          "file": "images/logos/ARI_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_ATL_EM_LG",
+          "file": "images/logos/ATL_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_ATL_EM_SM",
+          "file": "images/logos/ATL_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_ATL_BA_LG",
+          "file": "images/logos/ATL_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_ATL_BA_SM",
+          "file": "images/logos/ATL_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_BAL_EM_LG",
+          "file": "images/logos/BAL_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_BAL_EM_SM",
+          "file": "images/logos/BAL_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_BAL_BA_LG",
+          "file": "images/logos/BAL_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_BAL_BA_SM",
+          "file": "images/logos/BAL_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_BOS_EM_LG",
+          "file": "images/logos/BOS_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_BOS_EM_SM",
+          "file": "images/logos/BOS_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_BOS_BA_LG",
+          "file": "images/logos/BOS_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_BOS_BA_SM",
+          "file": "images/logos/BOS_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_CHC_EM_LG",
+          "file": "images/logos/CHC_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_CHC_EM_SM",
+          "file": "images/logos/CHC_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_CHC_BA_LG",
+          "file": "images/logos/CHC_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_CHC_BA_SM",
+          "file": "images/logos/CHC_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_CWS_EM_LG",
+          "file": "images/logos/CWS_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_CWS_EM_SM",
+          "file": "images/logos/CWS_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_CWS_BA_LG",
+          "file": "images/logos/CWS_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_CWS_BA_SM",
+          "file": "images/logos/CWS_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_CIN_EM_LG",
+          "file": "images/logos/CIN_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_CIN_EM_SM",
+          "file": "images/logos/CIN_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_CIN_BA_LG",
+          "file": "images/logos/CIN_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_CIN_BA_SM",
+          "file": "images/logos/CIN_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_CLE_EM_LG",
+          "file": "images/logos/CLE_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_CLE_EM_SM",
+          "file": "images/logos/CLE_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_CLE_BA_LG",
+          "file": "images/logos/CLE_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_CLE_BA_SM",
+          "file": "images/logos/CLE_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_COL_EM_LG",
+          "file": "images/logos/COL_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_COL_EM_SM",
+          "file": "images/logos/COL_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_COL_BA_LG",
+          "file": "images/logos/COL_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_COL_BA_SM",
+          "file": "images/logos/COL_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_DET_EM_LG",
+          "file": "images/logos/DET_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_DET_EM_SM",
+          "file": "images/logos/DET_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_DET_BA_LG",
+          "file": "images/logos/DET_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_DET_BA_SM",
+          "file": "images/logos/DET_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_HOU_EM_LG",
+          "file": "images/logos/HOU_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_HOU_EM_SM",
+          "file": "images/logos/HOU_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_HOU_BA_LG",
+          "file": "images/logos/HOU_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_HOU_BA_SM",
+          "file": "images/logos/HOU_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_KCR_EM_LG",
+          "file": "images/logos/KCR_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_KCR_EM_SM",
+          "file": "images/logos/KCR_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_KCR_BA_LG",
+          "file": "images/logos/KCR_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_KCR_BA_SM",
+          "file": "images/logos/KCR_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_LAA_EM_LG",
+          "file": "images/logos/LAA_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_LAA_EM_SM",
+          "file": "images/logos/LAA_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_LAA_BA_LG",
+          "file": "images/logos/LAA_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_LAA_BA_SM",
+          "file": "images/logos/LAA_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_LAD_EM_LG",
+          "file": "images/logos/LAD_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_LAD_EM_SM",
+          "file": "images/logos/LAD_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_LAD_BA_LG",
+          "file": "images/logos/LAD_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_LAD_BA_SM",
+          "file": "images/logos/LAD_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_MIA_EM_LG",
+          "file": "images/logos/MIA_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_MIA_EM_SM",
+          "file": "images/logos/MIA_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_MIA_BA_LG",
+          "file": "images/logos/MIA_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_MIA_BA_SM",
+          "file": "images/logos/MIA_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_MIL_EM_LG",
+          "file": "images/logos/MIL_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_MIL_EM_SM",
+          "file": "images/logos/MIL_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_MIL_BA_LG",
+          "file": "images/logos/MIL_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_MIL_BA_SM",
+          "file": "images/logos/MIL_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_MIN_EM_LG",
+          "file": "images/logos/MIN_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_MIN_EM_SM",
+          "file": "images/logos/MIN_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_MIN_BA_LG",
+          "file": "images/logos/MIN_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_MIN_BA_SM",
+          "file": "images/logos/MIN_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_NYM_EM_LG",
+          "file": "images/logos/NYM_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_NYM_EM_SM",
+          "file": "images/logos/NYM_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_NYM_BA_LG",
+          "file": "images/logos/NYM_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_NYM_BA_SM",
+          "file": "images/logos/NYM_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_NYY_EM_LG",
+          "file": "images/logos/NYY_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_NYY_EM_SM",
+          "file": "images/logos/NYY_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_NYY_BA_LG",
+          "file": "images/logos/NYY_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_NYY_BA_SM",
+          "file": "images/logos/NYY_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_ATH_EM_LG",
+          "file": "images/logos/ATH_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_ATH_EM_SM",
+          "file": "images/logos/ATH_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_ATH_BA_LG",
+          "file": "images/logos/ATH_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_ATH_BA_SM",
+          "file": "images/logos/ATH_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_PHI_EM_LG",
+          "file": "images/logos/PHI_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_PHI_EM_SM",
+          "file": "images/logos/PHI_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_PHI_BA_LG",
+          "file": "images/logos/PHI_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_PHI_BA_SM",
+          "file": "images/logos/PHI_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_PIT_EM_LG",
+          "file": "images/logos/PIT_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_PIT_EM_SM",
+          "file": "images/logos/PIT_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_PIT_BA_LG",
+          "file": "images/logos/PIT_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_PIT_BA_SM",
+          "file": "images/logos/PIT_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_SDP_EM_LG",
+          "file": "images/logos/SDP_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_SDP_EM_SM",
+          "file": "images/logos/SDP_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_SDP_BA_LG",
+          "file": "images/logos/SDP_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_SDP_BA_SM",
+          "file": "images/logos/SDP_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_SEA_EM_LG",
+          "file": "images/logos/SEA_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_SEA_EM_SM",
+          "file": "images/logos/SEA_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_SEA_BA_LG",
+          "file": "images/logos/SEA_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_SEA_BA_SM",
+          "file": "images/logos/SEA_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_SFG_EM_LG",
+          "file": "images/logos/SFG_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_SFG_EM_SM",
+          "file": "images/logos/SFG_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_SFG_BA_LG",
+          "file": "images/logos/SFG_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_SFG_BA_SM",
+          "file": "images/logos/SFG_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_STL_EM_LG",
+          "file": "images/logos/STL_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_STL_EM_SM",
+          "file": "images/logos/STL_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_STL_BA_LG",
+          "file": "images/logos/STL_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_STL_BA_SM",
+          "file": "images/logos/STL_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_TBR_EM_LG",
+          "file": "images/logos/TBR_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_TBR_EM_SM",
+          "file": "images/logos/TBR_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_TBR_BA_LG",
+          "file": "images/logos/TBR_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_TBR_BA_SM",
+          "file": "images/logos/TBR_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_TEX_EM_LG",
+          "file": "images/logos/TEX_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_TEX_EM_SM",
+          "file": "images/logos/TEX_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_TEX_BA_LG",
+          "file": "images/logos/TEX_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_TEX_BA_SM",
+          "file": "images/logos/TEX_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_TOR_EM_LG",
+          "file": "images/logos/TOR_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_TOR_EM_SM",
+          "file": "images/logos/TOR_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_TOR_BA_LG",
+          "file": "images/logos/TOR_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_TOR_BA_SM",
+          "file": "images/logos/TOR_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_WSN_EM_LG",
+          "file": "images/logos/WSN_EM_LG.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_WSN_EM_SM",
+          "file": "images/logos/WSN_EM_SM.png",
+          "targetPlatforms": [
+            "emery"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_WSN_BA_LG",
+          "file": "images/logos/WSN_BA_LG.png",
+          "targetPlatforms": [
+            "basalt"
+          ]
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_LOGO_WSN_BA_SM",
+          "file": "images/logos/WSN_BA_SM.png",
+          "targetPlatforms": [
+            "basalt"
           ]
         }
       ]

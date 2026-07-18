@@ -141,6 +141,13 @@
         "label": "Wrist Flick",
         "description": "Flick wrist to pin the ticker game on screen",
         "defaultValue": true
+      },
+      {
+        "type": "toggle",
+        "messageKey": "TEAM_LOGOS",
+        "label": "Team Logos",
+        "description": "Show team logos instead of abbreviations (color platforms only)",
+        "defaultValue": false
       }
     ]
   },

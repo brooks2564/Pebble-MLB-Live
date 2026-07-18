@@ -563,6 +563,7 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   int score_y=by-8;
   int rec_y=by+16, inn_y=by+36, inn_h=26;
   int score_h = 32;
+  int logo_sm_h = 22; // logo mode: small (records-shown) badge height
   int bat_y=by+64, bat_w=w-80-hpad;
   int spd_y=by+64, lp_y=by+82, lp_w=w-28-hpad;
   int bso_bl=by+100, bso_bd=by+108;
@@ -580,6 +581,7 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   int score_y=by-4;
   int rec_y=by+24, inn_y=by+26, inn_h=20;
   int score_h = 26;
+  int logo_sm_h = 16; // logo mode: small (records-shown) badge height
   int bat_y=by+46, bat_w=w-70-hpad;
   int spd_y=by+46, lp_y=by+60, lp_w=w-36-hpad;
   int bso_bl=by+75, bso_bd=by+82;
@@ -701,38 +703,55 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   // badge/score row grows to fill that freed space exactly up to inn_y — no
   // other y-position needs to move. Skipped when a doubleheader G2 line needs
   // that same space, and never applied to the wrist-flick view above.
-  bool badge_grown = live_now && !s_game2_score[0];
-  int badge_h = badge_grown ? (inn_y - score_y) : score_h;
+  // Logo mode uses its own row position (starting at the divider line, not
+  // above it like the text layout does — bitmaps have no font padding to
+  // hide the overlap) and its own smaller non-live height.
+  // On the smaller rect screens the non-live logo size is too small to read
+  // next to records, so basalt always uses the big logo (and skips records)
+  // whenever logo mode is on, not just while live.
+#ifdef PBL_PLATFORM_EMERY
+  bool small_screen_logos = false;
+#else
+  bool small_screen_logos = s_team_logos && !s_game2_score[0];
+#endif
+  bool badge_grown = (live_now && !s_game2_score[0]) || small_screen_logos;
+  bool show_records = !live_now && !small_screen_logos;
+  int row_y = s_team_logos ? by : score_y;
+  int row_h = badge_grown ? (inn_y - row_y) : (s_team_logos ? logo_sm_h : score_h);
   draw_team_badge(ctx, s_away_abbr, f24,
-    GRect(hpad, score_y, abbr_w, badge_h), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
+    GRect(hpad, row_y, abbr_w, row_h), GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft,
     s_away_logo_lg, s_away_logo_sm, badge_grown);
   char sc[16];
   snprintf(sc, sizeof(sc), "%d - %d", s_away_score, s_home_score);
   graphics_context_set_text_color(ctx, GColorWhite);
   graphics_draw_text(ctx, sc, f28,
-    GRect(w/2 - score_w/2, score_y, score_w, badge_h), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+    GRect(w/2 - score_w/2, row_y, score_w, row_h), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
   draw_team_badge(ctx, s_home_abbr, f24,
-    GRect(w - abbr_w - hpad, score_y, abbr_w, badge_h), GTextOverflowModeTrailingEllipsis, GTextAlignmentRight,
+    GRect(w - abbr_w - hpad, row_y, abbr_w, row_h), GTextOverflowModeTrailingEllipsis, GTextAlignmentRight,
     s_home_logo_lg, s_home_logo_sm, badge_grown);
   if (s_game2_score[0]) {
     int mid_x = hpad + abbr_w;
     int mid_w = w - 2*(hpad + abbr_w);
     graphics_context_set_text_color(ctx, GColorLightGray);
     graphics_draw_text(ctx, s_game2_score, f14,
-      GRect(mid_x, score_y + badge_h, mid_w, 18),
+      GRect(mid_x, row_y + row_h, mid_w, 18),
       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
   }
 
-  // Records — hidden live so the badges above can grow into this space
-  if (!live_now) {
+  // Records — hidden live so the badges above can grow into this space.
+  // In logo mode, sit right below the (smaller) logo row instead of the
+  // fixed text-mode rec_y, since the logo row starts lower to clear the divider.
+  if (show_records) {
+    int actual_rec_y = s_team_logos ? (row_y + row_h + 2) : rec_y;
+    GFont rec_font = s_team_logos ? fsm : f14;
     graphics_context_set_text_color(ctx, GColorLightGray);
     char rec[10];
     snprintf(rec, sizeof(rec), "%d-%d", s_away_wins, s_away_losses);
-    graphics_draw_text(ctx, rec, f14,
-      GRect(hpad, rec_y, abbr_w, 18), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+    graphics_draw_text(ctx, rec, rec_font,
+      GRect(hpad, actual_rec_y, abbr_w, 18), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
     snprintf(rec, sizeof(rec), "%d-%d", s_home_wins, s_home_losses);
-    graphics_draw_text(ctx, rec, f14,
-      GRect(w - abbr_w - 2 - hpad, rec_y, abbr_w + 2, 18), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
+    graphics_draw_text(ctx, rec, rec_font,
+      GRect(w - abbr_w - 2 - hpad, actual_rec_y, abbr_w + 2, 18), GTextOverflowModeWordWrap, GTextAlignmentRight, NULL);
   }
 
   // Inning

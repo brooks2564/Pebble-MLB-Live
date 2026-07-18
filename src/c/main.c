@@ -394,6 +394,8 @@ static GColor team_color(const char *abbr) {
   if (strcmp(abbr,"TEX")==0) return GColorCobaltBlue;
   if (strcmp(abbr,"TOR")==0) return GColorCobaltBlue;
   if (strcmp(abbr,"WSN")==0) return GColorRed;
+  if (strcmp(abbr,"AL")==0)  return GColorRed;
+  if (strcmp(abbr,"NL")==0)  return GColorCobaltBlue;
   return GColorWhite;
 }
 
@@ -558,6 +560,22 @@ static void canvas_update(Layer *layer, GContext *ctx) {
     graphics_draw_text(ctx, "flick to return", fsm,
       GRect(0, fl_ret_y, w, 14),
       GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+    return;
+  }
+
+  // Home Run Derby reminder (day before the All-Star Game — no live derby data exists)
+  if (strcmp(s_status, "derby") == 0) {
+    graphics_context_set_text_color(ctx, GColorWhite);
+    graphics_draw_text(ctx, "Home Run Derby", f24,
+      GRect(0, by+2, w, 28), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+    graphics_context_set_text_color(ctx, GColorYellow);
+    graphics_draw_text(ctx, "Tonight", f18,
+      GRect(0, by+32, w, 22), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+    if (s_next_game[0]) {
+      graphics_context_set_text_color(ctx, GColorLightGray);
+      graphics_draw_text(ctx, s_next_game, f14,
+        GRect(hpad, by+58, w-2*hpad, 18), GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+    }
     return;
   }
 

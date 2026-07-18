@@ -319,6 +319,7 @@ function buildTicker(games, myAbbr) {
   var parts = [];
   for (var i = 0; i < games.length; i++) {
     var g    = games[i];
+    if (g.gameType === "A") continue; // All-Star Game gets its own main-screen display
     var away = toInternal((g.teams.away.team.abbreviation || "").toUpperCase());
     var home = toInternal((g.teams.home.team.abbreviation || "").toUpperCase());
     if (away === myAbbr || home === myAbbr) continue;
@@ -354,6 +355,7 @@ function buildTickerDetail(games, myAbbr) {
   var parts = [];
   for (var i = 0; i < games.length; i++) {
     var g    = games[i];
+    if (g.gameType === "A") continue; // All-Star Game gets its own main-screen display
     var away = toInternal((g.teams.away.team.abbreviation || "").toUpperCase());
     var home = toInternal((g.teams.home.team.abbreviation || "").toUpperCase());
     if (away === myAbbr || home === myAbbr) continue;
@@ -484,6 +486,45 @@ function fetchGameData(teamIdx) {
   xhr.send();
 }
 
+// ── All-Star Game / Home Run Derby helpers ──────────────────────────────────
+// MLB's public schedule API exposes the All-Star Game itself (gameType "A", teams
+// "AL"/"NL") but has no discoverable endpoint for live Home Run Derby data, so the
+// Derby gets a reminder card instead of live scoring.
+function findGameByType(gamesList, type) {
+  for (var i = 0; i < gamesList.length; i++) {
+    if (gamesList[i].gameType === type) return gamesList[i];
+  }
+  return null;
+}
+
+function allGamesFlat(dates) {
+  var out = [];
+  for (var d = 0; d < dates.length; d++) out = out.concat(dates[d].games || []);
+  return out;
+}
+
+function subtractOneDay(dateStr) {
+  var p = dateStr.split("-");
+  var d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+  d.setDate(d.getDate() - 1);
+  var mm = d.getMonth() + 1, dd = d.getDate();
+  return d.getFullYear() + "-" + (mm < 10 ? "0" + mm : mm) + "-" + (dd < 10 ? "0" + dd : dd);
+}
+
+function truncateWords(str, maxLen) {
+  if (str.length <= maxLen) return str;
+  var cut = str.substring(0, maxLen);
+  var lastSpace = cut.lastIndexOf(" ");
+  return lastSpace > 0 ? cut.substring(0, lastSpace) : cut;
+}
+
+function sendDerbyMessage(venueName) {
+  var msg = {};
+  msg[KEY_STATUS] = "derby";
+  msg[KEY_NEXT_GAME] = venueName ? truncateWords("at " + venueName, 19) : "";
+  sendMessage(msg);
+}
+
 function findLastTeamGame(gamesList, target, stateFilter) {
   var result = null;
   for (var i = 0; i < gamesList.length; i++) {
@@ -518,8 +559,23 @@ function processGames(dates, todayGames, abbr, today, yesterday, tomorrow) {
     if (dates[d].date === tomorrow) { tomorrowGames = dates[d].games || []; break; }
   }
 
+  // All-Star Game: shown to every user on ASG day, regardless of selected team
+  var game1 = findGameByType(todayGames, "A");
+
+  // Home Run Derby: no live data available (see findGameByType comment above) —
+  // show a reminder card the night before the All-Star Game instead
+  if (!game1) {
+    var asgRef = findGameByType(allGamesFlat(dates), "A");
+    if (asgRef) {
+      var asgDate = (asgRef.officialDate || asgRef.gameDate || "").substring(0, 10);
+      if (asgDate && subtractOneDay(asgDate) === today) {
+        sendDerbyMessage(asgRef.venue && asgRef.venue.name);
+        return;
+      }
+    }
+  }
+
   // Pass 1: LIVE game on any date (midnight crossing)
-  var game1 = null;
   for (var d = 0; d < dates.length && !game1; d++) {
     game1 = findTeamGame(dates[d].games || [], target, "Live");
   }

@@ -72,7 +72,14 @@
       "HR_VOLUME": 40,
       "HR_TEST": 41,
       "WRIST_FLICK": 42,
-      "TEAM_LOGOS": 43
+      "TEAM_LOGOS": 43,
+      "BETWEEN_INNINGS": 44,
+      "LOB": 45,
+      "NEXT_BATTERS": 46,
+      "INCOMING_PITCHER": 47,
+      "PITCHER_BALLS": 48,
+      "PITCHER_STRIKES": 49,
+      "JUST_BATTED_HOME": 50
     },
     "resources": {
       "media": [

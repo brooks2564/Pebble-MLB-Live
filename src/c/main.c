@@ -44,6 +44,13 @@
 #define KEY_HR_TEST       41
 #define KEY_WRIST_FLICK   42
 #define KEY_TEAM_LOGOS    43
+#define KEY_BETWEEN_INNINGS 44
+#define KEY_LOB              45
+#define KEY_NEXT_BATTERS     46
+#define KEY_INCOMING_PITCHER 47
+#define KEY_PITCHER_BALLS    48
+#define KEY_PITCHER_STRIKES  49
+#define KEY_JUST_BATTED_HOME 50
 
 #define NUM_TEAMS    30
 #define PERSIST_TEAM 1
@@ -143,6 +150,14 @@ static char s_detail_raw[380]  = "";
 static char s_game_details[MAX_GAMES][DETAIL_LEN];
 static bool  s_viewing_ticker     = false;
 static char  s_ticker_team_str[GAME_LEN] = "";
+static bool s_between_innings    = false;
+static int  s_lob                = 0;
+static bool s_lob_side_home      = false;
+static char s_next_batters_raw[80] = "";
+static char s_next_batters[3][24];
+static char s_incoming_pitcher[16] = "";
+static int  s_pitcher_balls   = 0;
+static int  s_pitcher_strikes = 0;
 
 static void request_game_data(void);
 
@@ -193,6 +208,23 @@ static void parse_ticker_game(const char *src,
       else strncpy(status_str,tok[5],9);
       status_str[9]='\0';
     }
+  }
+}
+
+static void parse_next_batters(void) {
+  memset(s_next_batters, 0, sizeof(s_next_batters));
+  char buf[80];
+  strncpy(buf, s_next_batters_raw, 79); buf[79] = '\0';
+  int gi = 0;
+  char *p = buf;
+  while (*p && gi < 3) {
+    char *pipe = strchr(p, '|');
+    if (pipe) *pipe = '\0';
+    strncpy(s_next_batters[gi], p, 23);
+    s_next_batters[gi][23] = '\0';
+    gi++;
+    if (!pipe) break;
+    p = pipe + 1;
   }
 }
 
@@ -572,6 +604,7 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   int dot_r=4, dot_sp=13;
   int pre_pitch_y=by+82, pre_tv_y=by+98;
   int fin_dec_y=by+82, fin_save_y=by+98, fin_next_y=by+114;
+  int ib_y0=by+62, ib_gap=20, ib_row_h=16;
 #else
   GFont f28 = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
   GFont f24 = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
@@ -590,6 +623,7 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   int dot_r=3, dot_sp=10;
   int pre_pitch_y=by+58, pre_tv_y=by+72;
   int fin_dec_y=by+58, fin_save_y=by+72, fin_next_y=by+86;
+  int ib_y0=by+46, ib_gap=15, ib_row_h=13;
 #endif
   GFont fsm = fonts_get_system_font(FONT_KEY_GOTHIC_14);
 
@@ -820,6 +854,61 @@ static void canvas_update(Layer *layer, GContext *ctx) {
 
   if (strcmp(s_status,"live")!=0) return;
 
+  // Between-innings: LOB/pitcher/counts on the side of the team that just took
+  // the field, next-3-batters on the side of the team due up — sides follow
+  // s_lob_side_home so the columns track whichever half is next, matching the
+  // away/home placement already used for the score row above. Replaces the
+  // diamond/BSO/current-batter view, which is misleading on a break.
+  if (s_between_innings) {
+    int col_gap = 4;
+    int col_w   = (w - 2*hpad - col_gap) / 2;
+    int left_x  = hpad;
+    int right_x = hpad + col_w + col_gap;
+    int lob_x   = s_lob_side_home ? right_x : left_x;
+    int bat_x   = s_lob_side_home ? left_x  : right_x;
+
+    // LOB / pitcher / strikes / balls column
+    graphics_context_set_text_color(ctx, GColorLightGray);
+    char lob_buf[12];
+    snprintf(lob_buf, sizeof(lob_buf), "LOB: %d", s_lob);
+    graphics_draw_text(ctx, lob_buf, fsm,
+      GRect(lob_x, ib_y0, col_w, ib_row_h), GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+
+    if (s_incoming_pitcher[0]) {
+      graphics_context_set_text_color(ctx, GColorYellow);
+      graphics_draw_text(ctx, s_incoming_pitcher, fsm,
+        GRect(lob_x, ib_y0 + ib_gap, col_w, ib_row_h),
+        GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+    }
+
+    char st_buf[16];
+    snprintf(st_buf, sizeof(st_buf), "Strikes: %d", s_pitcher_strikes);
+    graphics_context_set_text_color(ctx, GColorMediumAquamarine);
+    graphics_draw_text(ctx, st_buf, fsm,
+      GRect(lob_x, ib_y0 + ib_gap*2, col_w, ib_row_h), GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+
+    char bl_buf[16];
+    snprintf(bl_buf, sizeof(bl_buf), "Balls: %d", s_pitcher_balls);
+    graphics_context_set_text_color(ctx, GColorMediumAquamarine);
+    graphics_draw_text(ctx, bl_buf, fsm,
+      GRect(lob_x, ib_y0 + ib_gap*3, col_w, ib_row_h), GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+
+    // Next-up batters column
+    graphics_context_set_text_color(ctx, GColorLightGray);
+    graphics_draw_text(ctx, "Next Up", fsm,
+      GRect(bat_x, ib_y0, col_w, ib_row_h), GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+
+    graphics_context_set_text_color(ctx, GColorWhite);
+    for (int i = 0; i < 3; i++) {
+      if (s_next_batters[i][0]) {
+        graphics_draw_text(ctx, s_next_batters[i], fsm,
+          GRect(bat_x, ib_y0 + ib_gap*(i+1), col_w, ib_row_h),
+          GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+      }
+    }
+    return;
+  }
+
   // Batter + speed
   if (s_batter[0]) {
     graphics_context_set_text_color(ctx, GColorWhite);
@@ -1035,6 +1124,19 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
   }
   t = dict_find(iter,KEY_TEAM_LOGOS);
   if(t){s_team_logos=(bool)t->value->int32;persist_write_bool(PERSIST_TEAM_LOGOS,s_team_logos);}
+  t = dict_find(iter,KEY_BETWEEN_INNINGS); if(t) s_between_innings=(bool)t->value->int32;
+  t = dict_find(iter,KEY_LOB);             if(t) s_lob=(int)t->value->int32;
+  t = dict_find(iter,KEY_NEXT_BATTERS);
+  if(t){
+    strncpy(s_next_batters_raw,t->value->cstring,79);
+    s_next_batters_raw[79]=0;
+    parse_next_batters();
+  }
+  t = dict_find(iter,KEY_INCOMING_PITCHER);
+  if(t){strncpy(s_incoming_pitcher,t->value->cstring,15);s_incoming_pitcher[15]=0;}
+  t = dict_find(iter,KEY_PITCHER_BALLS);   if(t) s_pitcher_balls=(int)t->value->int32;
+  t = dict_find(iter,KEY_PITCHER_STRIKES); if(t) s_pitcher_strikes=(int)t->value->int32;
+  t = dict_find(iter,KEY_JUST_BATTED_HOME); if(t) s_lob_side_home=(bool)t->value->int32;
 
   if(strcmp(s_status,"live")==0 && s_vibrate){
     int my=s_i_am_away?s_away_score:s_home_score;
@@ -1086,6 +1188,9 @@ static void inbox_received(DictionaryIterator *iter, void *ctx) {
       s_win_pitcher[0]=s_loss_pitcher[0]=s_save_pitcher[0]=s_tv_network[0]=0;
       s_detail_raw[0]=0;
       memset(s_game_details,0,sizeof(s_game_details));
+      s_between_innings=false; s_lob=0; s_lob_side_home=false;
+      s_next_batters_raw[0]=0; memset(s_next_batters,0,sizeof(s_next_batters));
+      s_incoming_pitcher[0]=0; s_pitcher_balls=s_pitcher_strikes=0;
       s_prev_score=-1;
       strncpy(s_status,"off",7);
       request_game_data();

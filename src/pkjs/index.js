@@ -83,6 +83,13 @@ var KEY_SAVE_PITCHER = 37;
 var KEY_TV_NETWORK   = 38;
 var KEY_TICKER_DETAIL = 39;
 var KEY_TEAM_LOGOS   = 43;
+var KEY_BETWEEN_INNINGS = 44;
+var KEY_LOB              = 45;
+var KEY_NEXT_BATTERS     = 46;
+var KEY_INCOMING_PITCHER = 47;
+var KEY_PITCHER_BALLS    = 48;
+var KEY_PITCHER_STRIKES  = 49;
+var KEY_JUST_BATTED_HOME = 50;
 
 // Official MLB Stats API — free, no key required
 var SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule";
@@ -453,6 +460,76 @@ function extractLivePBP(liveData) {
   return result;
 }
 
+// Between-innings state (linescore.inningState "Middle"/"End"). The team that just
+// finished batting immediately takes the field, so LOB and the incoming pitcher both
+// come from that same team; the other team supplies the next-3-batters list.
+function extractInningsBreak(liveData) {
+  var result = { active:false, lob:0, lobIsHome:0, batters:"", pitcher:"", balls:0, strikes:0 };
+  if (!liveData) return result;
+
+  var ld    = liveData.liveData || {};
+  var ls    = ld.linescore || {};
+  var state = ls.inningState || "";
+
+  var justBattedKey;
+  if (state === "Middle")      justBattedKey = "away"; // top just ended
+  else if (state === "End")    justBattedKey = "home"; // bottom just ended
+  else return result;
+
+  result.active    = true;
+  result.lobIsHome = (justBattedKey === "home") ? 1 : 0;
+
+  var innings = ls.innings || [];
+  if (innings.length) {
+    var lastInning = innings[innings.length - 1];
+    result.lob = ((lastInning[justBattedKey] || {}).leftOnBase) || 0;
+  }
+
+  var box            = ld.boxscore || {};
+  var nextBattingKey = (justBattedKey === "away") ? "home" : "away";
+  var battingBox      = (box.teams || {})[nextBattingKey] || {};
+
+  // "LastName .AVG H-AB" for a due-up batter — season average plus this game's
+  // hits/at-bats so far
+  function battingLine(playerObj) {
+    if (!playerObj || !playerObj.fullName) return "";
+    var name = getLastName(playerObj.fullName);
+    var hits = 0, ab = 0, avg = "";
+    if (playerObj.id) {
+      var p   = (battingBox.players || {})["ID" + playerObj.id];
+      var bat = p && p.stats && p.stats.batting;
+      if (bat) { hits = bat.hits || 0; ab = bat.atBats || 0; }
+      var seasonBat = p && p.seasonStats && p.seasonStats.batting;
+      if (seasonBat && seasonBat.avg && seasonBat.avg !== ".---") avg = seasonBat.avg;
+    }
+    return name + (avg ? " " + avg : "") + " " + hits + "-" + ab;
+  }
+
+  var offense = ls.offense || {};
+  var lines = [];
+  var b1 = battingLine(offense.batter);
+  var b2 = battingLine(offense.onDeck);
+  var b3 = battingLine(offense.inHole);
+  if (b1) lines.push(b1);
+  if (b2) lines.push(b2);
+  if (b3) lines.push(b3);
+  result.batters = lines.join("|");
+
+  var defense    = ls.defense || {};
+  var pitcherObj = defense.pitcher || {};
+  if (pitcherObj.fullName) result.pitcher = getLastName(pitcherObj.fullName);
+  if (pitcherObj.id) {
+    var teamBox  = (box.teams || {})[justBattedKey] || {};
+    var player   = (teamBox.players || {})["ID" + pitcherObj.id];
+    var pitching = player && player.stats && player.stats.pitching;
+    if (pitching) {
+      result.balls   = pitching.balls   || 0;
+      result.strikes = pitching.strikes || 0;
+    }
+  }
+  return result;
+}
+
 // ── Game data fetch ───────────────────────────────────────────────────────
 function fetchGameData(teamIdx) {
   var abbr      = TEAMS[teamIdx].abbr;
@@ -738,7 +815,19 @@ function processGames(dates, todayGames, abbr, today, yesterday, tomorrow) {
       msg[KEY_ON_SECOND]   = pbp.onSecond;
       msg[KEY_ON_THIRD]    = pbp.onThird;
       msg[KEY_PITCH_TYPE]  = pbp.pitchType;
-      sendMessage(msg, extraMsg);
+
+      var ib = extractInningsBreak(liveData);
+      var inningsMsg = {};
+      inningsMsg[KEY_BETWEEN_INNINGS] = ib.active ? 1 : 0;
+      if (ib.active) {
+        inningsMsg[KEY_LOB]              = ib.lob;
+        inningsMsg[KEY_JUST_BATTED_HOME] = ib.lobIsHome;
+        inningsMsg[KEY_NEXT_BATTERS]     = ib.batters;
+        inningsMsg[KEY_INCOMING_PITCHER] = ib.pitcher;
+        inningsMsg[KEY_PITCHER_BALLS]    = ib.balls;
+        inningsMsg[KEY_PITCHER_STRIKES]  = ib.strikes;
+      }
+      sendMessage(msg, extraMsg, inningsMsg);
     });
     return;
   }
@@ -783,17 +872,28 @@ function sendOffMessage() {
   sendMessage(msg);
 }
 
-function sendExtraMsg(extraMsg) {
+function sendInningsMsg(inningsMsg) {
+  Pebble.sendAppMessage(inningsMsg,
+    function()  { console.log("[MLB] Innings-break sent OK"); },
+    function(e) { console.log("[MLB] Innings-break NACK: " + JSON.stringify(e)); }
+  );
+}
+
+function sendExtraMsg(extraMsg, inningsMsg) {
   Pebble.sendAppMessage(extraMsg,
-    function()  { console.log("[MLB] Extra sent OK"); },
+    function()  {
+      console.log("[MLB] Extra sent OK");
+      if (inningsMsg) sendInningsMsg(inningsMsg);
+    },
     function(e) { console.log("[MLB] Extra NACK: " + JSON.stringify(e)); }
   );
 }
 
-function sendMessage(dict, extraMsg) {
+function sendMessage(dict, extraMsg, inningsMsg) {
   // Send TICKER in a separate message to avoid 512-byte inbox overflow.
   // A full game message + long ticker string can exceed the buffer.
-  // Extra msg (pitchers, TV) goes in a third message for the same reason.
+  // Extra msg (pitchers, TV) and the innings-break msg go in their own
+  // messages for the same reason.
   var ticker = dict[KEY_TICKER];
   delete dict[KEY_TICKER];
 
@@ -806,12 +906,15 @@ function sendMessage(dict, extraMsg) {
         Pebble.sendAppMessage(tm,
           function() {
             console.log("[MLB] Ticker sent OK");
-            if (extraMsg) sendExtraMsg(extraMsg);
+            if (extraMsg) sendExtraMsg(extraMsg, inningsMsg);
+            else if (inningsMsg) sendInningsMsg(inningsMsg);
           },
           function(e) { console.log("[MLB] Ticker NACK: " + JSON.stringify(e)); }
         );
       } else if (extraMsg) {
-        sendExtraMsg(extraMsg);
+        sendExtraMsg(extraMsg, inningsMsg);
+      } else if (inningsMsg) {
+        sendInningsMsg(inningsMsg);
       }
     },
     function(e) { console.log("[MLB] NACK: " + JSON.stringify(e)); }
